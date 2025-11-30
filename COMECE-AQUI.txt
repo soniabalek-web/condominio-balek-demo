@@ -1,0 +1,227 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║              🎯 AMBIENTE DEMO - COMECE AQUI!                     ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📍 Você está em: D:\Gestao-de-condominio\demo\
+
+Esta pasta contém TUDO para criar o ambiente demo separado!
+
+═══════════════════════════════════════════════════════════════════
+
+📁 ESTRUTURA ORGANIZADA
+
+D:\Gestao-de-condominio\
+├── backend/                    ← Sistema REAL (produção)
+├── frontend/                   ← Sistema REAL (produção)
+├── Backups/                    ← Backups do sistema REAL
+│
+└── demo/                       ← 👈 VOCÊ ESTÁ AQUI!
+    ├── backend/                ← Código backend DEMO
+    ├── frontend/               ← Código frontend DEMO
+    ├── documentacao/           ← 📖 Guias e manuais
+    ├── scripts/                ← Scripts de importação
+    ├── render-demo.yaml        ← Config do Render
+    ├── README.md               ← Visão geral
+    └── COMECE-AQUI.txt         ← Este arquivo
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 POR ONDE COMEÇAR?
+
+1️⃣  Leia este arquivo (você está lendo! ✅)
+
+2️⃣  Abra e leia: README.md
+    └→ Visão geral do ambiente demo
+
+3️⃣  Navegue até: documentacao/
+    └→ Leia: RESUMO-AMBIENTE-DEMO.txt
+    └→ Depois: GUIA-DEPLOY-DEMO.md
+
+4️⃣  (Opcional) Imprima: documentacao/CHECKLIST-DEPLOY-DEMO.txt
+    └→ Para riscar conforme avança
+
+═══════════════════════════════════════════════════════════════════
+
+📂 DETALHES DAS PASTAS
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 📁 backend/                                                     │
+├─────────────────────────────────────────────────────────────────┤
+│ Código completo do backend (API Node.js + TypeScript)          │
+│                                                                 │
+│ Principais arquivos:                                            │
+│ ├── src/              ← Código-fonte                            │
+│ ├── dist/             ← Código compilado                        │
+│ ├── .env.demo         ← Variáveis de ambiente DEMO              │
+│ ├── package.json      ← Dependências                            │
+│ └── tsconfig.json     ← Config TypeScript                       │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 📁 frontend/                                                    │
+├─────────────────────────────────────────────────────────────────┤
+│ Código completo do frontend (React + TypeScript + Vite)        │
+│                                                                 │
+│ Principais arquivos:                                            │
+│ ├── src/              ← Código-fonte                            │
+│ ├── dist/             ← Build de produção                       │
+│ ├── .env.demo         ← Variáveis de ambiente DEMO              │
+│ ├── package.json      ← Dependências                            │
+│ └── vite.config.ts    ← Config Vite                             │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 📁 documentacao/         ⭐ LEIA ESTES ARQUIVOS!                │
+├─────────────────────────────────────────────────────────────────┤
+│ Toda a documentação para criar o ambiente demo                 │
+│                                                                 │
+│ Arquivos:                                                       │
+│ ├── RESUMO-AMBIENTE-DEMO.txt         ← Resumo rápido (5 min)   │
+│ ├── GUIA-DEPLOY-DEMO.md              ← Guia completo (10 min)  │
+│ ├── CHECKLIST-DEPLOY-DEMO.txt        ← Para imprimir           │
+│ ├── README-DEMO.md                   ← README do GitHub        │
+│ └── ARQUIVOS-CRIADOS-PARA-DEMO.txt   ← Lista de arquivos       │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 📁 scripts/          ⚙️ Scripts automáticos                     │
+├─────────────────────────────────────────────────────────────────┤
+│ Scripts para exportar/importar dados                           │
+│                                                                 │
+│ Arquivos:                                                       │
+│ ├── EXPORTAR-DADOS-PARA-DEMO.bat     ← Exportar (Windows)      │
+│ ├── exportar-dados-para-demo.sh      ← Exportar (Linux/Mac)    │
+│ └── IMPORTAR-DADOS-NO-DEMO.bat       ← Importar (Windows)      │
+│                                                                 │
+│ Uso: Parte 4 do guia (importar dados no banco demo)           │
+└─────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════
+
+📋 ORDEM DE EXECUÇÃO RECOMENDADA
+
+Siga esta ordem para não se perder:
+
+┌── FASE 1: ENTENDER (10 minutos)
+│   ├─ 1. Ler: COMECE-AQUI.txt (este arquivo) ✅
+│   ├─ 2. Ler: README.md
+│   └─ 3. Ler: documentacao/RESUMO-AMBIENTE-DEMO.txt
+│
+├── FASE 2: PLANEJAR (10 minutos)
+│   ├─ 4. Ler: documentacao/GUIA-DEPLOY-DEMO.md
+│   ├─ 5. Imprimir: documentacao/CHECKLIST-DEPLOY-DEMO.txt
+│   └─ 6. Separar 30-40 minutos sem interrupções
+│
+├── FASE 3: EXECUTAR (30-40 minutos)
+│   ├─ 7. Seguir Parte 1 do guia (GitHub)
+│   ├─ 8. Seguir Parte 2 do guia (Git push)
+│   ├─ 9. Seguir Parte 3 do guia (Render)
+│   ├─ 10. Seguir Parte 4 do guia (Dados) ← Usar scripts/
+│   ├─ 11. Seguir Parte 5 do guia (Domínio)
+│   └─ 12. Seguir Parte 6 do guia (Testar)
+│
+└── FASE 4: CONFIRMAR (5 minutos)
+    ├─ 13. Acessar: https://demo.balek.de
+    ├─ 14. Fazer login: admin@residencialbalek.com / Demo@2025
+    └─ 15. Testar funcionalidades
+
+═══════════════════════════════════════════════════════════════════
+
+⚠️ IMPORTANTE: DIFERENÇAS DO SISTEMA REAL
+
+┌─────────────────────┬─────────────────────┬──────────────────────┐
+│                     │   SISTEMA REAL      │   SISTEMA DEMO       │
+├─────────────────────┼─────────────────────┼──────────────────────┤
+│ Pasta               │ /backend /frontend  │ /demo/backend /demo/ │
+│                     │                     │ frontend             │
+├─────────────────────┼─────────────────────┼──────────────────────┤
+│ URL                 │ condominio.balek.de │ demo.balek.de        │
+├─────────────────────┼─────────────────────┼──────────────────────┤
+│ Senha Admin         │ Balek@Admin2025!... │ Demo@2025            │
+├─────────────────────┼─────────────────────┼──────────────────────┤
+│ Dados               │ Reais (uso diário)  │ Cópia (para testes)  │
+├─────────────────────┼─────────────────────┼──────────────────────┤
+│ Finalidade          │ Produção            │ Demonstração         │
+└─────────────────────┴─────────────────────┴──────────────────────┘
+
+⚠️ NÃO CONFUNDA AS PASTAS!
+
+✅ DEMO → /demo/
+✅ REAL → /backend/ e /frontend/ (fora da pasta demo)
+
+═══════════════════════════════════════════════════════════════════
+
+🔄 FLUXO DE TRABALHO
+
+Quando você seguir o guia, vai fazer isso:
+
+1. Criar repositório no GitHub: "condominio-balek-demo"
+   └→ Subir APENAS o conteúdo da pasta /demo/
+
+2. Criar 3 serviços no Render:
+   ├→ Banco: balek-demo-db
+   ├→ Backend: balek-demo-backend (usa /demo/backend/)
+   └→ Frontend: balek-demo-frontend (usa /demo/frontend/)
+
+3. Copiar dados do sistema real para o demo:
+   ├→ Exportar: scripts/EXPORTAR-DADOS-PARA-DEMO.bat
+   └→ Importar: scripts/IMPORTAR-DADOS-NO-DEMO.bat
+
+4. Configurar domínio demo.balek.de no IONOS
+
+5. Testar em https://demo.balek.de
+
+═══════════════════════════════════════════════════════════════════
+
+✅ VANTAGENS DESTA ORGANIZAÇÃO
+
+1. ✅ Tudo separado: Real vs Demo em pastas diferentes
+2. ✅ Fácil de encontrar: Tudo do demo está em /demo/
+3. ✅ Não há risco: Impossível mexer no sistema real por engano
+4. ✅ Organizado: documentacao/ scripts/ backend/ frontend/
+5. ✅ Limpo: Nada de arquivos demo espalhados na raiz
+
+═══════════════════════════════════════════════════════════════════
+
+📝 COMANDOS RÁPIDOS
+
+Para navegar até as pastas importantes:
+
+# Ir para a pasta demo
+cd D:\Gestao-de-condominio\demo
+
+# Ir para documentação
+cd D:\Gestao-de-condominio\demo\documentacao
+
+# Ir para scripts
+cd D:\Gestao-de-condominio\demo\scripts
+
+# Voltar para a raiz
+cd D:\Gestao-de-condominio
+
+═══════════════════════════════════════════════════════════════════
+
+🆘 PRECISA DE AJUDA?
+
+1. Releia os arquivos em documentacao/
+2. Veja a seção "Problemas Comuns" no guia
+3. Chame o Claude AI que ele te ajuda! 🤖
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 PRÓXIMO PASSO
+
+Abra agora: README.md
+(Está nesta mesma pasta)
+
+═══════════════════════════════════════════════════════════════════
+
+         🏢 Sistema de Gestão de Condomínio
+              Residencial Balek
+             Ambiente de Demonstração
+              👉 COMECE AQUI! 👈
+                   2025
+
+═══════════════════════════════════════════════════════════════════

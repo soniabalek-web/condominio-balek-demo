@@ -1,0 +1,221 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║       ✅ CHECKLIST - DEPLOY AMBIENTE DEMO                        ║
+║       Imprima e marque conforme avança!                          ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+
+📋 ANTES DE COMEÇAR
+
+    [ ] Li o arquivo RESUMO-AMBIENTE-DEMO.txt
+    [ ] Li o arquivo GUIA-DEPLOY-DEMO.md
+    [ ] Tenho 30-40 minutos disponíveis
+    [ ] Estou com café/água por perto ☕
+    [ ] Vamos lá! 💪
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 1: GITHUB (10 minutos)
+
+    [ ] 1.1 - Acessei https://github.com
+    [ ] 1.2 - Fiz login como soniabalek-web
+    [ ] 1.3 - Cliquei em "+ → New repository"
+    [ ] 1.4 - Nome: condominio-balek-demo
+    [ ] 1.5 - Deixei PÚBLICO (public)
+    [ ] 1.6 - NÃO marquei "Add README"
+    [ ] 1.7 - Cliquei em "Create repository"
+    [ ] 1.8 - Copiei a URL do repositório
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 2: SUBIR CÓDIGO (5 minutos)
+
+    [ ] 2.1 - Abri o CMD (Win+R → cmd)
+    [ ] 2.2 - Executei: cd /d D:\Gestao-de-condominio
+    [ ] 2.3 - Executei: git init
+    [ ] 2.4 - Executei: git add .
+    [ ] 2.5 - Executei: git commit -m "Código demo"
+    [ ] 2.6 - Executei: git remote add demo [URL]
+    [ ] 2.7 - Executei: git push demo main
+    [ ] 2.8 - Código está no GitHub! ✅
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 3: RENDER - BANCO (5 minutos)
+
+    [ ] 3.1 - Acessei https://dashboard.render.com/
+    [ ] 3.2 - Cliquei em "New + → PostgreSQL"
+    [ ] 3.3 - Name: balek-demo-db
+    [ ] 3.4 - Database: residencial_balek_demo
+    [ ] 3.5 - User: balek_demo_admin
+    [ ] 3.6 - Region: Oregon
+    [ ] 3.7 - Plan: Free
+    [ ] 3.8 - Cliquei em "Create Database"
+    [ ] 3.9 - Aguardei aparecer "Available"
+    [ ] 3.10 - Copiei a "External Database URL"
+    [ ] 3.11 - Salvei a URL no bloco de notas
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 3: RENDER - BACKEND (10 minutos)
+
+    [ ] 3.12 - Cliquei em "New + → Web Service"
+    [ ] 3.13 - Conectei ao repositório demo
+    [ ] 3.14 - Name: balek-demo-backend
+    [ ] 3.15 - Region: Oregon
+    [ ] 3.16 - Runtime: Node
+    [ ] 3.17 - Build Command: cd backend && npm install && npm run build
+    [ ] 3.18 - Start Command: cd backend && npm start
+    [ ] 3.19 - Plan: Free
+
+    [ ] 3.20 - Adicionei variáveis de ambiente:
+                - NODE_ENV = production
+                - PORT = 10000
+                - JWT_SECRET = demo_jwt_secret...
+                - ADMIN_DEFAULT_PASSWORD = Demo@2025
+                - CORS_ORIGIN = https://demo.balek.de,...
+                - DATABASE_URL = [URL do banco]
+
+    [ ] 3.21 - Cliquei em "Create Web Service"
+    [ ] 3.22 - Aguardei o deploy (5-10 min)
+    [ ] 3.23 - Copiei a URL do backend
+    [ ] 3.24 - Testei /api/health e funcionou! ✅
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 3: RENDER - FRONTEND (10 minutos)
+
+    [ ] 3.25 - Cliquei em "New + → Static Site"
+    [ ] 3.26 - Conectei ao repositório demo
+    [ ] 3.27 - Name: balek-demo-frontend
+    [ ] 3.28 - Region: Oregon
+    [ ] 3.29 - Build Command com URL correta do backend
+    [ ] 3.30 - Publish Directory: ./frontend/dist
+    [ ] 3.31 - Cliquei em "Create Static Site"
+    [ ] 3.32 - Aguardei o deploy (5-10 min)
+    [ ] 3.33 - Copiei a URL do frontend
+    [ ] 3.34 - Acessei a URL e funcionou! ✅
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 4: IMPORTAR DADOS (10 minutos)
+
+    [ ] 4.1 - Executei: EXPORTAR-DADOS-PARA-DEMO.bat
+    [ ] 4.2 - Arquivo .sql foi criado
+    [ ] 4.3 - Executei: IMPORTAR-DADOS-NO-DEMO.bat
+    [ ] 4.4 - Colei o host do banco demo
+    [ ] 4.5 - Colei a senha do banco demo
+    [ ] 4.6 - Selecionei o arquivo .sql
+    [ ] 4.7 - Confirmei a importação
+    [ ] 4.8 - Dados importados com sucesso! ✅
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 5: CONFIGURAR DOMÍNIO (15 minutos)
+
+    IONOS:
+    [ ] 5.1 - Acessei https://www.ionos.com/
+    [ ] 5.2 - Fui em Domínios → balek.de → DNS
+    [ ] 5.3 - Adicionei registro CNAME:
+              - Nome: demo
+              - Valor: balek-demo-frontend.onrender.com
+              - TTL: 3600
+    [ ] 5.4 - Salvei as alterações
+
+    RENDER:
+    [ ] 5.5 - Voltei ao Render
+    [ ] 5.6 - Cliquei em "balek-demo-frontend"
+    [ ] 5.7 - Fui em Settings → Custom Domains
+    [ ] 5.8 - Adicionei: demo.balek.de
+    [ ] 5.9 - Salvei
+    [ ] 5.10 - Aguardei 10-30 min para DNS propagar
+
+    TESTE:
+    [ ] 5.11 - Acessei https://demo.balek.de
+    [ ] 5.12 - Funcionou! ✅
+
+
+═══════════════════════════════════════════════════════════════════
+
+PARTE 6: TESTAR TUDO (5 minutos)
+
+    [ ] 6.1 - Acessei https://demo.balek.de
+    [ ] 6.2 - Fiz login: admin@residencialbalek.com / Demo@2025
+    [ ] 6.3 - Vi os apartamentos
+    [ ] 6.4 - Vi as despesas copiadas
+    [ ] 6.5 - Vi o histórico de gás
+    [ ] 6.6 - Criei uma despesa de teste
+    [ ] 6.7 - Gerei um relatório
+    [ ] 6.8 - Tudo funcionando perfeitamente! 🎉
+
+
+═══════════════════════════════════════════════════════════════════
+
+PÓS-DEPLOY
+
+    [ ] Configurei lembrete no celular (dia 27 - renovar bancos)
+    [ ] Testei o sistema demo com outra pessoa
+    [ ] Salvei as URLs em local seguro:
+        - Sistema real: condominio.balek.de
+        - Sistema demo: demo.balek.de
+    [ ] Arquivei este checklist como concluído
+
+
+═══════════════════════════════════════════════════════════════════
+
+🎉 PARABÉNS! VOCÊ CONSEGUIU!
+
+Agora você tem 2 sistemas:
+
+    ✅ REAL → condominio.balek.de (seus dados)
+    ✅ DEMO → demo.balek.de (para usuários testarem)
+
+
+═══════════════════════════════════════════════════════════════════
+
+⏰ LEMBRETES RECORRENTES
+
+    [ ] TODO DIA 27: Renovar balek-condominio-db (real)
+    [ ] TODO DIA 27: Renovar balek-demo-db (demo)
+    [ ] 1X POR SEMANA: Testar demo.balek.de
+    [ ] QUANDO NECESSÁRIO: Resetar dados do demo
+
+
+═══════════════════════════════════════════════════════════════════
+
+📝 ANOTAÇÕES PESSOAIS
+
+    URL Backend Demo: _______________________________________________
+
+    URL Frontend Demo: ______________________________________________
+
+    Senha Banco Demo: _______________________________________________
+
+    Data de Criação: ___/___/______
+
+    Próxima Renovação: ___/___/______
+
+    Observações:
+    _________________________________________________________________
+
+    _________________________________________________________________
+
+    _________________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════
+
+         🏢 Sistema de Gestão de Condomínio
+              Residencial Balek
+             Checklist de Deploy DEMO
+                   2025
+
+═══════════════════════════════════════════════════════════════════

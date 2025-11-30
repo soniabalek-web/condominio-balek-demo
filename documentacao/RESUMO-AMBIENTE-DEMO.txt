@@ -1,0 +1,152 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║           🎯 AMBIENTE DEMO - RESUMO RÁPIDO                       ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📅 Criado em: 30/11/2025
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 OBJETIVO
+
+Criar uma cópia COMPLETA e SEPARADA do sistema em demo.balek.de
+para que usuários possam testar SEM afetar o sistema real.
+
+═══════════════════════════════════════════════════════════════════
+
+📊 COMPARAÇÃO: SISTEMA REAL vs DEMO
+
+┌─────────────────────┬─────────────────────────┬──────────────────────┐
+│                     │    SISTEMA REAL         │    SISTEMA DEMO      │
+├─────────────────────┼─────────────────────────┼──────────────────────┤
+│ URL                 │ condominio.balek.de     │ demo.balek.de        │
+│ Backend             │ balek-backed...         │ balek-demo-back...   │
+│ Banco de Dados      │ balek-condominio-db     │ balek-demo-db        │
+│ Senha Admin         │ Balek@Admin2025!Seguro  │ Demo@2025            │
+│ Dados               │ REAIS (seu uso)         │ CÓPIA dos reais      │
+│ Renovação Banco     │ Todo dia 27             │ Todo dia 27          │
+└─────────────────────┴─────────────────────────┴──────────────────────┘
+
+═══════════════════════════════════════════════════════════════════
+
+📁 ARQUIVOS CRIADOS PARA VOCÊ
+
+1. ✅ render-demo.yaml
+   → Configuração automática do Render para o ambiente demo
+
+2. ✅ backend/.env.demo
+   → Variáveis de ambiente para o backend demo
+
+3. ✅ frontend/.env.demo
+   → Variáveis de ambiente para o frontend demo
+
+4. ✅ GUIA-DEPLOY-DEMO.md
+   → Guia COMPLETO passo-a-passo (LEIA ESTE!)
+
+5. ✅ EXPORTAR-DADOS-PARA-DEMO.bat
+   → Script para exportar dados do sistema real
+
+6. ✅ IMPORTAR-DADOS-NO-DEMO.bat
+   → Script para importar dados no banco demo
+
+7. ✅ RESUMO-AMBIENTE-DEMO.txt
+   → Este arquivo (resumo rápido)
+
+═══════════════════════════════════════════════════════════════════
+
+🚀 COMO COMEÇAR?
+
+1. LEIA O GUIA COMPLETO:
+   📖 Abra: GUIA-DEPLOY-DEMO.md
+
+   Esse guia tem TODOS os passos detalhados com:
+   - Prints conceituais
+   - Comandos prontos para copiar
+   - Explicações simples
+   - Checklist
+
+2. SIGA OS 6 PASSOS DO GUIA:
+   ✅ Parte 1: Criar repositório no GitHub
+   ✅ Parte 2: Subir código para o GitHub
+   ✅ Parte 3: Criar serviços no Render
+   ✅ Parte 4: Importar dados
+   ✅ Parte 5: Configurar domínio demo.balek.de
+   ✅ Parte 6: Testar o sistema
+
+3. SE TIVER DÚVIDAS:
+   Me chame que eu te ajudo! 😊
+
+═══════════════════════════════════════════════════════════════════
+
+⏱️ TEMPO TOTAL ESTIMADO: 30-40 minutos
+
+═══════════════════════════════════════════════════════════════════
+
+✅ BENEFÍCIOS DO AMBIENTE DEMO
+
+1. ✅ Usuários podem testar à vontade
+2. ✅ Não afeta seus dados reais
+3. ✅ 100% automático (não precisa do seu PC ligado)
+4. ✅ Mesmo visual e funcionalidades
+5. ✅ Fácil de resetar os dados
+6. ✅ Domínio profissional (demo.balek.de)
+7. ✅ Totalmente GRATUITO
+
+═══════════════════════════════════════════════════════════════════
+
+🔄 COMO RESETAR OS DADOS DO DEMO?
+
+Se os usuários bagunçarem os dados do demo e você quiser
+voltar aos dados originais:
+
+1. Execute: EXPORTAR-DADOS-PARA-DEMO.bat
+   (exporta dados atuais do sistema real)
+
+2. Execute: IMPORTAR-DADOS-NO-DEMO.bat
+   (importa no banco demo)
+
+3. Pronto! Dados resetados! ✅
+
+═══════════════════════════════════════════════════════════════════
+
+⚠️ LEMBRETES IMPORTANTES
+
+1. RENOVAR BANCO DEMO TODO MÊS (dia 27)
+   - Acesse: https://dashboard.render.com/
+   - Clique em "balek-demo-db"
+   - Clique em "Renew for free"
+
+2. CONFIGURAR LEMBRETE NO CELULAR
+   - Configure alarme para dia 27 de cada mês
+   - Título: "Renovar bancos Render (real + demo)"
+
+3. MONITORAR O DEMO
+   - Acesse demo.balek.de de vez em quando
+   - Verifique se está funcionando
+   - Limpe dados bagunçados se necessário
+
+═══════════════════════════════════════════════════════════════════
+
+🆘 PRECISA DE AJUDA?
+
+Se tiver qualquer dúvida durante o processo:
+
+1. Releia o GUIA-DEPLOY-DEMO.md
+2. Veja a seção "PROBLEMAS COMUNS" no guia
+3. Me chame que eu te ajudo!
+
+═══════════════════════════════════════════════════════════════════
+
+📞 SUPORTE
+
+Claude AI está aqui para te ajudar em cada passo! 🤖
+
+═══════════════════════════════════════════════════════════════════
+
+         🏢 Sistema de Gestão de Condomínio
+              Residencial Balek
+             Ambiente de Demonstração
+                   2025
+
+═══════════════════════════════════════════════════════════════════

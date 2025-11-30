@@ -1,0 +1,108 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║           📁 ESTRUTURA DO AMBIENTE DEMO                          ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+D:\Gestao-de-condominio\demo\
+│
+├── 📄 COMECE-AQUI.txt          ⭐ LEIA PRIMEIRO!
+├── 📄 README.md                📖 Visão geral do demo
+├── 📄 ESTRUTURA.txt            📁 Este arquivo
+├── ⚙️  render-demo.yaml        🔧 Config do Render.com
+│
+├── 📂 backend/                 🖥️  API Node.js + TypeScript
+│   ├── src/                    💻 Código-fonte
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── routes/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   └── server.ts
+│   ├── dist/                   📦 Código compilado
+│   ├── uploads/                📎 Arquivos enviados
+│   ├── .env.demo               🔐 Variáveis de ambiente
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── 📂 frontend/                🎨 React + TypeScript + Vite
+│   ├── src/                    💻 Código-fonte
+│   │   ├── components/
+│   │   ├── contexts/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── types/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── dist/                   📦 Build de produção
+│   ├── .env.demo               🔐 Variáveis de ambiente
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── 📂 documentacao/            📚 Guias e manuais
+│   ├── RESUMO-AMBIENTE-DEMO.txt              (7 KB)
+│   ├── GUIA-DEPLOY-DEMO.md                   (12 KB) ⭐
+│   ├── CHECKLIST-DEPLOY-DEMO.txt             (9 KB)
+│   ├── README-DEMO.md                        (10 KB)
+│   └── ARQUIVOS-CRIADOS-PARA-DEMO.txt        (17 KB)
+│
+└── 📂 scripts/                 ⚙️  Scripts automáticos
+    ├── EXPORTAR-DADOS-PARA-DEMO.bat          (Windows)
+    ├── exportar-dados-para-demo.sh           (Linux/Mac)
+    └── IMPORTAR-DADOS-NO-DEMO.bat            (Windows)
+
+
+═══════════════════════════════════════════════════════════════════
+
+📊 ESTATÍSTICAS
+
+Total de pastas: 4 (backend, frontend, documentacao, scripts)
+Total de arquivos principais: 12
+Tamanho documentação: ~64 KB
+Tamanho total: ~completo (com node_modules)
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 ARQUIVOS MAIS IMPORTANTES
+
+1. ⭐ COMECE-AQUI.txt
+   └→ Ponto de partida, leia primeiro!
+
+2. ⭐ documentacao/GUIA-DEPLOY-DEMO.md
+   └→ Guia passo-a-passo completo
+
+3. ⭐ render-demo.yaml
+   └→ Configuração automática do Render
+
+4. ⚙️  scripts/EXPORTAR-DADOS-PARA-DEMO.bat
+   └→ Exportar dados do sistema real
+
+5. ⚙️  scripts/IMPORTAR-DADOS-NO-DEMO.bat
+   └→ Importar dados no banco demo
+
+═══════════════════════════════════════════════════════════════════
+
+📋 ORDEM DE LEITURA
+
+1° COMECE-AQUI.txt (este diretório)
+2° README.md (este diretório)
+3° documentacao/RESUMO-AMBIENTE-DEMO.txt
+4° documentacao/GUIA-DEPLOY-DEMO.md
+5° (Opcional) Imprimir: documentacao/CHECKLIST-DEPLOY-DEMO.txt
+
+═══════════════════════════════════════════════════════════════════
+
+✅ TUDO ORGANIZADO E SEPARADO!
+
+Sistema REAL:
+└─ D:\Gestao-de-condominio\backend\
+└─ D:\Gestao-de-condominio\frontend\
+
+Sistema DEMO:
+└─ D:\Gestao-de-condominio\demo\backend\
+└─ D:\Gestao-de-condominio\demo\frontend\
+
+Impossível confundir! 🎉
+
+═══════════════════════════════════════════════════════════════════
