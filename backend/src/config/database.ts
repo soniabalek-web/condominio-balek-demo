@@ -8,11 +8,22 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+// Configurar search_path para usar o schema 'demo'
+pool.on('connect', (client) => {
+  client.query('SET search_path TO demo, public');
+});
+
 // SQL para criar as tabelas
 export const createTables = async () => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // Criar schema 'demo' se não existir
+    await client.query(`CREATE SCHEMA IF NOT EXISTS demo`);
+
+    // Definir search_path para usar o schema 'demo'
+    await client.query(`SET search_path TO demo, public`);
 
     // Tabela de usuários (administradores e moradores)
     await client.query(`
