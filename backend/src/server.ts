@@ -77,6 +77,90 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Servidor rodando' });
 });
 
+// Rota temporária para copiar dados do schema public para demo
+app.post('/api/copiar-dados-demo', async (req, res) => {
+  try {
+    const client = await pool.connect();
+
+    try {
+      console.log('Iniciando cópia de dados do schema public para demo...');
+
+      // Limpar dados existentes no schema demo
+      await client.query('TRUNCATE TABLE demo.parcelas_cobradas CASCADE');
+      await client.query('TRUNCATE TABLE demo.despesas_parceladas CASCADE');
+      await client.query('TRUNCATE TABLE demo.pagamentos_moradores CASCADE');
+      await client.query('TRUNCATE TABLE demo.leituras_gas CASCADE');
+      await client.query('TRUNCATE TABLE demo.documentos CASCADE');
+      await client.query('TRUNCATE TABLE demo.despesas_condominio CASCADE');
+      await client.query('TRUNCATE TABLE demo.banco_transacoes CASCADE');
+      await client.query('TRUNCATE TABLE demo.banco_saldo CASCADE');
+      await client.query('TRUNCATE TABLE demo.emails_permitidos CASCADE');
+      await client.query('TRUNCATE TABLE demo.condominos CASCADE');
+      await client.query('TRUNCATE TABLE demo.categorias_despesas CASCADE');
+      await client.query('TRUNCATE TABLE demo.configuracoes CASCADE');
+      await client.query('TRUNCATE TABLE demo.usuarios CASCADE');
+
+      // Copiar tabelas na ordem correta (respeitando foreign keys)
+      await client.query('INSERT INTO demo.usuarios SELECT * FROM public.usuarios');
+      await client.query("SELECT setval('demo.usuarios_id_seq', (SELECT MAX(id) FROM demo.usuarios))");
+
+      await client.query('INSERT INTO demo.configuracoes SELECT * FROM public.configuracoes');
+      await client.query("SELECT setval('demo.configuracoes_id_seq', (SELECT MAX(id) FROM demo.configuracoes))");
+
+      await client.query('INSERT INTO demo.categorias_despesas SELECT * FROM public.categorias_despesas');
+      await client.query("SELECT setval('demo.categorias_despesas_id_seq', (SELECT MAX(id) FROM demo.categorias_despesas))");
+
+      await client.query('INSERT INTO demo.condominos SELECT * FROM public.condominos');
+      await client.query("SELECT setval('demo.condominos_id_seq', (SELECT MAX(id) FROM demo.condominos))");
+
+      await client.query('INSERT INTO demo.emails_permitidos SELECT * FROM public.emails_permitidos');
+      await client.query("SELECT setval('demo.emails_permitidos_id_seq', (SELECT MAX(id) FROM demo.emails_permitidos))");
+
+      await client.query('INSERT INTO demo.banco_saldo SELECT * FROM public.banco_saldo');
+      await client.query("SELECT setval('demo.banco_saldo_id_seq', (SELECT MAX(id) FROM demo.banco_saldo))");
+
+      await client.query('INSERT INTO demo.banco_transacoes SELECT * FROM public.banco_transacoes');
+      await client.query("SELECT setval('demo.banco_transacoes_id_seq', (SELECT MAX(id) FROM demo.banco_transacoes))");
+
+      await client.query('INSERT INTO demo.despesas_condominio SELECT * FROM public.despesas_condominio');
+      await client.query("SELECT setval('demo.despesas_condominio_id_seq', (SELECT MAX(id) FROM demo.despesas_condominio))");
+
+      await client.query('INSERT INTO demo.documentos SELECT * FROM public.documentos');
+      await client.query("SELECT setval('demo.documentos_id_seq', (SELECT MAX(id) FROM demo.documentos))");
+
+      await client.query('INSERT INTO demo.leituras_gas SELECT * FROM public.leituras_gas');
+      await client.query("SELECT setval('demo.leituras_gas_id_seq', (SELECT MAX(id) FROM demo.leituras_gas))");
+
+      await client.query('INSERT INTO demo.pagamentos_moradores SELECT * FROM public.pagamentos_moradores');
+      await client.query("SELECT setval('demo.pagamentos_moradores_id_seq', (SELECT MAX(id) FROM demo.pagamentos_moradores))");
+
+      await client.query('INSERT INTO demo.despesas_parceladas SELECT * FROM public.despesas_parceladas');
+      await client.query("SELECT setval('demo.despesas_parceladas_id_seq', (SELECT MAX(id) FROM demo.despesas_parceladas))");
+
+      await client.query('INSERT INTO demo.parcelas_cobradas SELECT * FROM public.parcelas_cobradas');
+      await client.query("SELECT setval('demo.parcelas_cobradas_id_seq', (SELECT MAX(id) FROM demo.parcelas_cobradas))");
+
+      console.log('✓ Dados copiados com sucesso!');
+
+      res.json({
+        sucesso: true,
+        mensagem: 'Dados copiados do sistema real para o demo com sucesso!'
+      });
+
+    } finally {
+      client.release();
+    }
+
+  } catch (error) {
+    console.error('Erro ao copiar dados:', error);
+    res.status(500).json({
+      sucesso: false,
+      erro: 'Erro ao copiar dados',
+      detalhes: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
 // Tratamento de erros
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Erro:', err);
