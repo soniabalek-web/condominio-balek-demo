@@ -16,4 +16,9 @@ router.post('/emails-permitidos', verificarToken, verificarAdmin, authController
 router.get('/emails-permitidos', verificarToken, verificarAdmin, authController.listarEmailsPermitidos);
 router.delete('/emails-permitidos/:id', verificarToken, verificarAdmin, authController.removerEmailPermitido);
 
+// Rotas de backup e restauração
+router.post('/backup', verificarToken, verificarAdmin, authController.gerarBackup);
+router.get('/backups', verificarToken, verificarAdmin, authController.listarBackups);
+router.post('/restaurar', verificarToken, verificarAdmin, authController.restaurarBackup);
+
 export default router;

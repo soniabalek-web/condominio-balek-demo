@@ -27,11 +27,6 @@ import {
   Switch,
   FormControlLabel,
   Alert,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Avatar,
   Chip,
   Paper,
@@ -39,7 +34,9 @@ import {
   Stack,
   Fab,
   Tabs,
-  Tab
+  Tab,
+  Backdrop,
+  CircularProgress
 } from '@mui/material';
 import {
   Logout,
@@ -55,13 +52,15 @@ import {
   LocalFireDepartment,
   Email,
   Assessment,
-  Menu as MenuIcon,
-  Close,
   TrendingUp,
   AttachMoney,
   PictureAsPdf,
   People,
-  Settings
+  Settings,
+  CloudUpload,
+  Backup,
+  Restore,
+  Security
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -77,10 +76,12 @@ import {
 
 const DashboardAdmin: React.FC = () => {
   const { usuario, logout } = useAuth();
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [secaoAtiva, setSecaoAtiva] = useState('visao-geral');
-  const [mes, setMes] = useState(new Date().getMonth() + 1);
-  const [ano, setAno] = useState(new Date().getFullYear());
+  // Inicializar com mês anterior
+  const mesAtual = new Date();
+  mesAtual.setMonth(mesAtual.getMonth() - 1); // Voltar 1 mês
+  const [mes, setMes] = useState(mesAtual.getMonth() + 1);
+  const [ano, setAno] = useState(mesAtual.getFullYear());
 
   // Estados
   const [despesas, setDespesas] = useState<DespesaCondominio[]>([]);
@@ -92,6 +93,8 @@ const DashboardAdmin: React.FC = () => {
   const [condominos, setCondominos] = useState<any[]>([]);
   const [configuracoes, setConfiguracoes] = useState<any>({});
   const [nomeCondominio, setNomeCondominio] = useState('Residencial Balek');
+  const [atas, setAtas] = useState<any[]>([]);
+  const [novaAta, setNovaAta] = useState({ data_reuniao: '', titulo: '', arquivo: null as File | null });
 
   // Dialogs
   const [dialogDespesa, setDialogDespesa] = useState(false);
@@ -99,8 +102,20 @@ const DashboardAdmin: React.FC = () => {
   const [dialogGas, setDialogGas] = useState(false);
   const [dialogEmail, setDialogEmail] = useState(false);
   const [dialogMudarMes, setDialogMudarMes] = useState(false);
+  const [dialogNovoApartamento, setDialogNovoApartamento] = useState(false);
+  const [dialogExcluirIntervalo, setDialogExcluirIntervalo] = useState(false);
+  const [dialogSeguranca, setDialogSeguranca] = useState(false);
+  const [senhaSeguranca, setSenhaSeguranca] = useState('');
+  const [acaoSeguranca, setAcaoSeguranca] = useState<'backup' | 'restaurar' | ''>('');
+  const [dialogRestaurar, setDialogRestaurar] = useState(false);
+  const [backupsDisponiveis, setBackupsDisponiveis] = useState<any[]>([]);
+  const [backupSelecionado, setBackupSelecionado] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [transacaoParaMudar, setTransacaoParaMudar] = useState<any>(null);
   const [novoMesAno, setNovoMesAno] = useState({ mes: mes, ano: ano });
+  const [novoApartamento, setNovoApartamento] = useState({ numero: '', nome_proprietario: '' });
+  const [intervaloExclusao, setIntervaloExclusao] = useState({ de: '', ate: '' });
 
   // Forms
   const [novaDespesa, setNovaDespesa] = useState({
@@ -122,7 +137,7 @@ const DashboardAdmin: React.FC = () => {
   const [leiturasInput, setLeiturasInput] = useState<any>({});
   const [leiturasAnteriores, setLeiturasAnteriores] = useState<any>({});
   const [novoEmail, setNovoEmail] = useState({ email: '', apartamento: '' });
-  const [mensagem, setMensagem] = useState<{ tipo: 'success' | 'error', texto: string } | null>(null);
+  const [mensagem, setMensagem] = useState<{ tipo: 'success' | 'error', texto: string | React.ReactNode } | null>(null);
   const [abaConfig, setAbaConfig] = useState(0);
   const [dadosBanco, setDadosBanco] = useState({ nome: '', codigo: '', agencia: '', conta: '', chavePix: '', favorecido: '', cidade: '' });
   const [dadosCondominio, setDadosCondominio] = useState({
@@ -158,6 +173,21 @@ const DashboardAdmin: React.FC = () => {
   useEffect(() => {
     carregarDados();
   }, [secaoAtiva, mes, ano]);
+
+  // Carregar atas quando abrir a seção de Atas de Reunião
+  useEffect(() => {
+    const carregarAtas = async () => {
+      if (secaoAtiva === 'atas') {
+        try {
+          const response = await api.get('/atas');
+          setAtas(response.data);
+        } catch (error) {
+          console.error('Erro ao carregar atas:', error);
+        }
+      }
+    };
+    carregarAtas();
+  }, [secaoAtiva]);
 
   const tentarCopiarSaldoMesAnterior = async (): Promise<number | null> => {
     try {
@@ -536,8 +566,10 @@ const DashboardAdmin: React.FC = () => {
     { id: 'despesas', nome: 'Despesas', icone: <Receipt /> },
     { id: 'banco', nome: 'Banco', icone: <AccountBalance /> },
     { id: 'gas', nome: 'Gás', icone: <LocalFireDepartment /> },
+    { id: 'atas', nome: 'Atas de Reunião', icone: <PictureAsPdf /> },
     { id: 'relatorios', nome: 'Relatórios', icone: <Assessment /> },
     { id: 'configuracoes', nome: 'Configurações', icone: <Settings /> },
+    { id: 'seguranca', nome: 'Segurança', icone: <Security /> },
   ];
 
   // Estatísticas para Visão Geral
@@ -551,58 +583,131 @@ const DashboardAdmin: React.FC = () => {
   const totalConsumoGas = resumo.reduce((sum, r) => sum + (parseFloat(String(r.valor_gas)) || 0), 0);
   const totalFundoReserva = resumo.reduce((sum, r) => sum + (parseFloat(String(r.fundo_reserva)) || 0), 0);
   const despesaCondominio = totalDespesas; // Soma de todas as despesas do condomínio
-  const nrApartamentos = 6;
+  const nrApartamentos = parseInt(configuracoes.numero_apartamentos || '6');
+
+  // Gera lista dinâmica de apartamentos baseado na configuração
+  const listaApartamentos = Array.from({ length: nrApartamentos }, (_, i) => i + 1);
 
   const COLORS = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140'];
 
+  // Abrir dialog de segurança (para backup ou restaurar)
+  const abrirDialogSeguranca = (acao: 'backup' | 'restaurar') => {
+    setAcaoSeguranca(acao);
+    setSenhaSeguranca('');
+    setDialogSeguranca(true);
+  };
+
+  const confirmarSenhaSeguranca = async () => {
+    if (senhaSeguranca !== 'Seguranca/551') {
+      setMensagem({ tipo: 'error', texto: 'Senha incorreta!' });
+      setTimeout(() => setMensagem(null), 3000);
+      return;
+    }
+
+    setDialogSeguranca(false);
+    setSenhaSeguranca('');
+
+    // Executar ação correspondente
+    if (acaoSeguranca === 'backup') {
+      await executarBackup();
+    } else if (acaoSeguranca === 'restaurar') {
+      await abrirListaBackups();
+    }
+  };
+
+  const executarBackup = async () => {
+    setLoading(true);
+    setLoadingMessage('Gerando backup do sistema... Por favor, aguarde.');
+
+    try {
+      // Novo endpoint: POST /auth/backup (salva direto na pasta)
+      const response = await api.post('/auth/backup');
+
+      const { arquivo, pasta } = response.data;
+
+      setLoading(false);
+
+      // Mensagem com informações do backup salvo
+      setMensagem({
+        tipo: 'success',
+        texto: (
+          <>
+            <strong>✅ Backup realizado com sucesso!</strong>
+            <br /><br />
+            📁 <strong>Arquivo:</strong> {arquivo}
+            <br />
+            📂 <strong>Pasta:</strong> {pasta}
+            <br /><br />
+            📌 <strong>Para restaurar:</strong> Use a opção "Restaurar Backup" no menu Segurança
+            <br /><br />
+            <em>Clique no X para fechar esta mensagem</em>
+          </>
+        )
+      });
+    } catch (error) {
+      console.error('Erro ao fazer backup:', error);
+      setLoading(false);
+      setMensagem({ tipo: 'error', texto: 'Erro ao gerar backup' });
+      setTimeout(() => setMensagem(null), 3000);
+    }
+  };
+
+  // Abrir lista de backups (após senha validada)
+  const abrirListaBackups = async () => {
+    try {
+      const response = await api.get('/auth/backups');
+      setBackupsDisponiveis(response.data.backups);
+      setDialogRestaurar(true);
+    } catch (error) {
+      console.error('Erro ao listar backups:', error);
+      setMensagem({ tipo: 'error', texto: 'Erro ao listar backups disponíveis' });
+      setTimeout(() => setMensagem(null), 3000);
+    }
+  };
+
+  // Confirmar restauração do backup
+  const confirmarRestauracao = async () => {
+    if (!backupSelecionado) {
+      setMensagem({ tipo: 'error', texto: 'Selecione um backup para restaurar' });
+      setTimeout(() => setMensagem(null), 3000);
+      return;
+    }
+
+    setDialogRestaurar(false);
+    setLoading(true);
+    setLoadingMessage('Restaurando backup... Isso pode levar alguns instantes. Por favor, aguarde.');
+
+    try {
+      await api.post('/auth/restaurar', { arquivo: backupSelecionado });
+
+      setLoading(false);
+
+      setMensagem({
+        tipo: 'success',
+        texto: (
+          <>
+            <strong>✅ Backup restaurado com sucesso!</strong>
+            <br /><br />
+            📁 <strong>Arquivo:</strong> {backupSelecionado}
+            <br /><br />
+            <em>Recarregue a página para ver os dados restaurados</em>
+            <br /><br />
+            <Button variant="contained" onClick={() => window.location.reload()}>
+              Recarregar Página
+            </Button>
+          </>
+        )
+      });
+    } catch (error) {
+      console.error('Erro ao restaurar backup:', error);
+      setLoading(false);
+      setMensagem({ tipo: 'error', texto: 'Erro ao restaurar backup' });
+      setTimeout(() => setMensagem(null), 3000);
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f7fa' }}>
-      {/* Menu Lateral */}
-      <Drawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: 280,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white'
-          }
-        }}
-      >
-        <Box p={3} display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" fontWeight={700}>Menu</Typography>
-          <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: 'white' }}>
-            <Close />
-          </IconButton>
-        </Box>
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-        <List>
-          {menuItems.map((item) => (
-            <ListItem
-              button
-              key={item.id}
-              onClick={() => {
-                setSecaoAtiva(item.id);
-                setDrawerOpen(false);
-              }}
-              sx={{
-                bgcolor: secaoAtiva === item.id ? 'rgba(255,255,255,0.2)' : 'transparent',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                my: 0.5,
-                borderRadius: 2,
-                mx: 1
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                {item.icone}
-              </ListItemIcon>
-              <ListItemText primary={item.nome} />
-            </ListItem>
-          ))}
-        </List>
-      </Drawer>
-
       {/* Conteúdo Principal */}
       <Box sx={{ flexGrow: 1 }}>
         <AppBar
@@ -615,9 +720,6 @@ const DashboardAdmin: React.FC = () => {
           }}
         >
           <Toolbar>
-            <IconButton color="inherit" onClick={() => setDrawerOpen(true)} sx={{ mr: 2 }}>
-              <MenuIcon />
-            </IconButton>
             <HomeIcon sx={{ mr: 2 }} />
             <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
               {nomeCondominio} - Administração
@@ -631,6 +733,47 @@ const DashboardAdmin: React.FC = () => {
               <Logout />
             </IconButton>
           </Toolbar>
+
+          {/* Menu de Navegação Horizontal */}
+          <Box sx={{ borderBottom: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Tabs
+              value={secaoAtiva}
+              onChange={(e, newValue) => setSecaoAtiva(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                '& .MuiTab-root': {
+                  color: 'rgba(255,255,255,0.7)',
+                  textTransform: 'none',
+                  minHeight: 64,
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  '&:hover': {
+                    color: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                  },
+                  '&.Mui-selected': {
+                    color: 'white',
+                    fontWeight: 600,
+                  }
+                },
+                '& .MuiTabs-indicator': {
+                  backgroundColor: 'white',
+                  height: 3,
+                }
+              }}
+            >
+              {menuItems.map((item) => (
+                <Tab
+                  key={item.id}
+                  value={item.id}
+                  label={item.nome}
+                  icon={item.icone}
+                  iconPosition="start"
+                />
+              ))}
+            </Tabs>
+          </Box>
         </AppBar>
 
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -1245,7 +1388,23 @@ const DashboardAdmin: React.FC = () => {
                 Configurações
               </Typography>
 
-              <Tabs value={abaConfig} onChange={(e, v) => setAbaConfig(v)} sx={{ mb: 3 }}>
+              <Tabs
+                value={abaConfig}
+                onChange={(e, v) => setAbaConfig(v)}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  mb: 3,
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    minWidth: 120,
+                    fontWeight: 600,
+                    fontSize: '0.95rem'
+                  }
+                }}
+              >
                 <Tab label="Cadastro do Condomínio" />
                 <Tab label="Fundo de Reserva" />
                 <Tab label="Dados Bancários" />
@@ -1368,8 +1527,75 @@ const DashboardAdmin: React.FC = () => {
                           onChange={(e) => setDadosCondominio({ ...dadosCondominio, emailSindico: e.target.value })}
                         />
                       </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Número de Apartamentos"
+                          type="text"
+                          placeholder="6"
+                          value={configuracoes.numero_apartamentos || ''}
+                          onChange={(e) => {
+                            const valor = e.target.value.replace(/\D/g, ''); // Remove não-números
+                            setConfiguracoes({ ...configuracoes, numero_apartamentos: valor });
+                          }}
+                          helperText="Total de apartamentos para rateio de despesas (clique para editar)"
+                          onFocus={(e) => {
+                            // Seleciona todo o texto ao focar
+                            setTimeout(() => e.target.select(), 0);
+                          }}
+                        />
+                      </Grid>
                     </Grid>
-                    <Box mt={3} display="flex" justifyContent="flex-end">
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Typography variant="h6" fontWeight={600} gutterBottom sx={{ color: '#1a1a2e', mb: 2 }}>
+                      Documentos do Condomínio
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Registro do Condomínio"
+                          type="file"
+                          InputLabelProps={{ shrink: true }}
+                          inputProps={{ accept: '.pdf,.doc,.docx' }}
+                          helperText="Formato: PDF, DOC ou DOCX"
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Convenção do Condomínio"
+                          type="file"
+                          InputLabelProps={{ shrink: true }}
+                          inputProps={{ accept: '.pdf,.doc,.docx' }}
+                          helperText="Formato: PDF, DOC ou DOCX"
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Contrato com Administradora"
+                          type="file"
+                          InputLabelProps={{ shrink: true }}
+                          inputProps={{ accept: '.pdf,.doc,.docx' }}
+                          helperText="Formato: PDF, DOC ou DOCX"
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Documentos Extras"
+                          type="file"
+                          InputLabelProps={{ shrink: true }}
+                          inputProps={{ accept: '.pdf,.doc,.docx', multiple: true }}
+                          helperText="Formato: PDF, DOC ou DOCX (múltiplos arquivos)"
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <Box mt={3} display="flex" justifyContent="flex-end" alignItems="center">
                       <Button
                         variant="contained"
                         onClick={async () => {
@@ -1387,7 +1613,8 @@ const DashboardAdmin: React.FC = () => {
                               { chave: 'cond_nome_sindico', valor: dadosCondominio.nomeSindico },
                               { chave: 'cond_tel_sindico', valor: dadosCondominio.telSindico },
                               { chave: 'cond_email_condominio', valor: dadosCondominio.emailCondominio },
-                              { chave: 'cond_email_sindico', valor: dadosCondominio.emailSindico }
+                              { chave: 'cond_email_sindico', valor: dadosCondominio.emailSindico },
+                              { chave: 'numero_apartamentos', valor: configuracoes.numero_apartamentos || '6' }
                             ]);
                             setMensagem({ tipo: 'success', texto: 'Cadastro do condomínio salvo com sucesso!' });
                             setTimeout(() => setMensagem(null), 3000);
@@ -1646,9 +1873,46 @@ const DashboardAdmin: React.FC = () => {
               {abaConfig === 4 && (
                 <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                   <CardContent>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Cadastro de Condôminos e Moradores
-                    </Typography>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h6" fontWeight={600}>
+                        Cadastro de Condôminos e Moradores
+                      </Typography>
+                      <Box display="flex" gap={2}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<Delete />}
+                          onClick={() => setDialogExcluirIntervalo(true)}
+                          sx={{
+                            borderColor: '#f44336',
+                            color: '#f44336',
+                            borderRadius: 2,
+                            px: 3,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            '&:hover': {
+                              borderColor: '#d32f2f',
+                              bgcolor: '#ffebee'
+                            }
+                          }}
+                        >
+                          Excluir Intervalo
+                        </Button>
+                        <Button
+                          variant="contained"
+                          startIcon={<Add />}
+                          onClick={() => setDialogNovoApartamento(true)}
+                          sx={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            borderRadius: 2,
+                            px: 3,
+                            textTransform: 'none',
+                            fontWeight: 600
+                          }}
+                        >
+                          Adicionar Apartamento
+                        </Button>
+                      </Box>
+                    </Box>
                     <Divider sx={{ my: 2 }} />
                     <Table>
                       <TableHead>
@@ -1743,6 +2007,270 @@ const DashboardAdmin: React.FC = () => {
                   </CardContent>
                 </Card>
               )}
+
+            </Box>
+          )}
+
+          {/* Atas de Reunião */}
+          {secaoAtiva === 'atas' && (
+            <Box>
+              <Typography variant="h4" fontWeight={700} mb={3} sx={{ color: '#1a1a2e' }}>
+                Atas de Reunião
+              </Typography>
+
+              {/* Upload de Nova Ata */}
+              <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', mb: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" fontWeight={600} mb={3}>
+                    Upload de Nova Ata de Reunião
+                  </Typography>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={3}>
+                      <TextField
+                        fullWidth
+                        label="Data da Reunião"
+                        type="date"
+                        InputLabelProps={{ shrink: true }}
+                        value={novaAta.data_reuniao}
+                        onChange={(e) => setNovaAta({ ...novaAta, data_reuniao: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        fullWidth
+                        label="Título (opcional)"
+                        placeholder="Ex: Ata de Assembleia Ordinária"
+                        value={novaAta.titulo}
+                        onChange={(e) => setNovaAta({ ...novaAta, titulo: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        component="label"
+                        startIcon={<CloudUpload />}
+                        sx={{ height: '56px' }}
+                      >
+                        {novaAta.arquivo ? novaAta.arquivo.name : 'Selecionar Arquivo'}
+                        <input
+                          type="file"
+                          hidden
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setNovaAta({ ...novaAta, arquivo: e.target.files[0] });
+                            }
+                          }}
+                        />
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={2}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        startIcon={<CloudUpload />}
+                        sx={{
+                          height: '56px',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #5568d3 0%, #63397d 100%)',
+                          }
+                        }}
+                        onClick={async () => {
+                          try {
+                            if (!novaAta.data_reuniao) {
+                              setMensagem({ tipo: 'error', texto: 'Data da reunião é obrigatória' });
+                              return;
+                            }
+                            if (!novaAta.arquivo) {
+                              setMensagem({ tipo: 'error', texto: 'Selecione um arquivo' });
+                              return;
+                            }
+
+                            const formData = new FormData();
+                            formData.append('data_reuniao', novaAta.data_reuniao);
+                            formData.append('titulo', novaAta.titulo);
+                            formData.append('arquivo', novaAta.arquivo);
+
+                            await api.post('/atas/upload', formData, {
+                              headers: { 'Content-Type': 'multipart/form-data' }
+                            });
+
+                            setMensagem({ tipo: 'success', texto: 'Ata enviada com sucesso!' });
+                            setNovaAta({ data_reuniao: '', titulo: '', arquivo: null });
+
+                            // Recarregar lista de atas
+                            const response = await api.get('/atas');
+                            setAtas(response.data);
+                          } catch (err: any) {
+                            setMensagem({ tipo: 'error', texto: err.response?.data?.erro || 'Erro ao enviar ata' });
+                          }
+                        }}
+                      >
+                        Enviar
+                      </Button>
+                    </Grid>
+                  </Grid>
+                  <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                    Formatos aceitos: PDF, DOC, DOCX (máximo 10MB)
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              {/* Lista de Atas */}
+              <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                <CardContent>
+                  <Typography variant="h6" fontWeight={600} mb={3}>
+                    Atas Cadastradas
+                  </Typography>
+                  {atas.length === 0 ? (
+                    <Alert severity="info">
+                      Nenhuma ata cadastrada. Use o formulário acima para fazer upload.
+                    </Alert>
+                  ) : (
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell><strong>Data da Reunião</strong></TableCell>
+                          <TableCell><strong>Título</strong></TableCell>
+                          <TableCell><strong>Arquivo</strong></TableCell>
+                          <TableCell><strong>Tamanho</strong></TableCell>
+                          <TableCell align="center"><strong>Ações</strong></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {atas.map((ata) => (
+                          <TableRow key={ata.id}>
+                            <TableCell>
+                              {new Date(ata.data_reuniao).toLocaleDateString('pt-BR')}
+                            </TableCell>
+                            <TableCell>{ata.titulo}</TableCell>
+                            <TableCell>{ata.nome_arquivo}</TableCell>
+                            <TableCell>
+                              {ata.tamanho ? `${(ata.tamanho / 1024).toFixed(0)} KB` : '-'}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box display="flex" gap={1} justifyContent="center">
+                                <IconButton
+                                  color="primary"
+                                  size="small"
+                                  onClick={() => {
+                                    window.open(`${(import.meta as any).env.VITE_API_URL || ''}/atas/download/${ata.id}`, '_blank');
+                                  }}
+                                  title="Baixar"
+                                >
+                                  <Download />
+                                </IconButton>
+                                <IconButton
+                                  color="error"
+                                  size="small"
+                                  onClick={async () => {
+                                    if (window.confirm(`Deseja realmente excluir a ata de ${new Date(ata.data_reuniao).toLocaleDateString('pt-BR')}?`)) {
+                                      try {
+                                        await api.delete(`/atas/${ata.id}`);
+                                        setMensagem({ tipo: 'success', texto: 'Ata excluída com sucesso!' });
+                                        // Recarregar lista
+                                        const response = await api.get('/atas');
+                                        setAtas(response.data);
+                                      } catch (err: any) {
+                                        setMensagem({ tipo: 'error', texto: err.response?.data?.erro || 'Erro ao excluir ata' });
+                                      }
+                                    }
+                                  }}
+                                  title="Excluir"
+                                >
+                                  <Delete />
+                                </IconButton>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </Box>
+          )}
+
+          {/* Segurança (Backup e Restaurar) */}
+          {secaoAtiva === 'seguranca' && (
+            <Box>
+              <Typography variant="h4" fontWeight={700} mb={3} sx={{ color: '#1a1a2e' }}>
+                Segurança - Backup e Restauração
+              </Typography>
+
+              <Grid container spacing={3}>
+                {/* Card Backup */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', height: '100%' }}>
+                    <CardContent>
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Backup sx={{ fontSize: 70, color: '#28a745', mb: 2 }} />
+                        <Typography variant="h5" fontWeight={600} gutterBottom sx={{ color: '#1a1a2e' }}>
+                          Fazer Backup
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, px: 2 }}>
+                          Salva todos os dados do sistema em um arquivo SQL na pasta de backups.
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          size="large"
+                          onClick={() => abrirDialogSeguranca('backup')}
+                          startIcon={<Backup />}
+                          sx={{
+                            background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                            fontWeight: 600,
+                            px: 3,
+                            py: 1.2
+                          }}
+                        >
+                          Fazer Backup
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Card Restaurar */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', height: '100%' }}>
+                    <CardContent>
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Restore sx={{ fontSize: 70, color: '#ffc107', mb: 2 }} />
+                        <Typography variant="h5" fontWeight={600} gutterBottom sx={{ color: '#1a1a2e' }}>
+                          Restaurar Backup
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, px: 2 }}>
+                          Restaura os dados de um backup anterior. <strong style={{ color: '#dc3545' }}>⚠️ Substitui todos os dados atuais!</strong>
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          size="large"
+                          onClick={() => abrirDialogSeguranca('restaurar')}
+                          startIcon={<Restore />}
+                          sx={{
+                            background: 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)',
+                            fontWeight: 600,
+                            px: 3,
+                            py: 1.2,
+                            color: '#000'
+                          }}
+                        >
+                          Restaurar Backup
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              {/* Informações de Segurança */}
+              <Alert severity="info" sx={{ mt: 3 }}>
+                <strong>Nota de Segurança:</strong> Ambas as operações requerem senha de segurança.
+                Os backups são salvos em <code>D:\Gestao-de-condominio\Backups\</code>
+              </Alert>
             </Box>
           )}
 
@@ -2057,7 +2585,7 @@ const DashboardAdmin: React.FC = () => {
               onChange={(e) => setValorM3(parseFloat(e.target.value))}
               helperText="Preço por metro cúbico"
             />
-            {[1, 2, 3, 4, 5, 6].map(num => {
+            {listaApartamentos.map(num => {
               const apto = num.toString().padStart(2, '0');
               const leituraAnterior = parseFloat(leiturasAnteriores[apto] || 0);
               const leituraAtual = parseFloat(leiturasInput[apto] || 0);
@@ -2135,6 +2663,133 @@ const DashboardAdmin: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      <Dialog open={dialogExcluirIntervalo} onClose={() => setDialogExcluirIntervalo(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Excluir Apartamentos em Intervalo</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <strong>Atenção!</strong> Esta ação irá excluir permanentemente os apartamentos do intervalo especificado.
+          </Alert>
+          <Stack spacing={3} mt={2}>
+            <TextField
+              fullWidth
+              label="De (Número)"
+              type="text"
+              value={intervaloExclusao.de}
+              onChange={(e) => {
+                const valor = e.target.value.replace(/\D/g, '').substring(0, 3);
+                setIntervaloExclusao({ ...intervaloExclusao, de: valor });
+              }}
+              helperText="Número inicial do intervalo (ex: 7)"
+            />
+            <TextField
+              fullWidth
+              label="Até (Número)"
+              type="text"
+              value={intervaloExclusao.ate}
+              onChange={(e) => {
+                const valor = e.target.value.replace(/\D/g, '').substring(0, 3);
+                setIntervaloExclusao({ ...intervaloExclusao, ate: valor });
+              }}
+              helperText="Número final do intervalo (ex: 10)"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setDialogExcluirIntervalo(false);
+            setIntervaloExclusao({ de: '', ate: '' });
+          }}>Cancelar</Button>
+          <Button onClick={async () => {
+            try {
+              if (!intervaloExclusao.de || !intervaloExclusao.ate) {
+                setMensagem({ tipo: 'error', texto: 'Preencha ambos os números do intervalo' });
+                return;
+              }
+              const de = parseInt(intervaloExclusao.de);
+              const ate = parseInt(intervaloExclusao.ate);
+              if (de > ate) {
+                setMensagem({ tipo: 'error', texto: 'O número inicial deve ser menor que o final' });
+                return;
+              }
+
+              // Excluir apartamentos no intervalo
+              for (let i = de; i <= ate; i++) {
+                const apto = i.toString().padStart(2, '0');
+                try {
+                  await api.delete(`/condominos/${apto}`);
+                } catch (err) {
+                  console.log(`Apartamento ${apto} não existe ou já foi excluído`);
+                }
+              }
+
+              setMensagem({ tipo: 'success', texto: `Apartamentos de ${de} até ${ate} excluídos!` });
+              setDialogExcluirIntervalo(false);
+              setIntervaloExclusao({ de: '', ate: '' });
+              // Recarregar condôminos
+              const res = await api.get('/condominos');
+              setCondominos(res.data);
+            } catch (err) {
+              setMensagem({ tipo: 'error', texto: 'Erro ao excluir apartamentos' });
+            }
+          }} variant="contained" color="error">Excluir Intervalo</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={dialogNovoApartamento} onClose={() => setDialogNovoApartamento(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Adicionar Novo Apartamento</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} mt={2}>
+            <TextField
+              fullWidth
+              label="Número do Apartamento"
+              type="text"
+              value={novoApartamento.numero}
+              onChange={(e) => {
+                const valor = e.target.value.replace(/\D/g, '').substring(0, 3); // Máximo 3 dígitos
+                setNovoApartamento({ ...novoApartamento, numero: valor });
+              }}
+              helperText="Digite o número do apartamento (ex: 10, 15, 101)"
+            />
+            <TextField
+              fullWidth
+              label="Nome do Proprietário"
+              value={novoApartamento.nome_proprietario}
+              onChange={(e) => setNovoApartamento({ ...novoApartamento, nome_proprietario: e.target.value })}
+              helperText="Opcional - pode ser preenchido depois"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setDialogNovoApartamento(false);
+            setNovoApartamento({ numero: '', nome_proprietario: '' });
+          }}>Cancelar</Button>
+          <Button onClick={async () => {
+            try {
+              if (!novoApartamento.numero) {
+                setMensagem({ tipo: 'error', texto: 'Número do apartamento é obrigatório' });
+                return;
+              }
+              const apto = novoApartamento.numero.padStart(2, '0');
+              await api.put(`/condominos/${apto}`, {
+                nome_proprietario: novoApartamento.nome_proprietario || `Proprietário Apto ${apto}`,
+                nome_morador: null,
+                telefone: null,
+                email: null
+              });
+              setMensagem({ tipo: 'success', texto: 'Apartamento adicionado!' });
+              setDialogNovoApartamento(false);
+              setNovoApartamento({ numero: '', nome_proprietario: '' });
+              // Recarregar condôminos
+              const res = await api.get('/condominos');
+              setCondominos(res.data);
+            } catch (err) {
+              setMensagem({ tipo: 'error', texto: 'Erro ao adicionar apartamento' });
+            }
+          }} variant="contained">Adicionar</Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={dialogEmail} onClose={() => setDialogEmail(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Adicionar Email Permitido</DialogTitle>
         <DialogContent>
@@ -2149,7 +2804,7 @@ const DashboardAdmin: React.FC = () => {
             <FormControl fullWidth>
               <InputLabel>Apartamento</InputLabel>
               <Select value={novoEmail.apartamento} label="Apartamento" onChange={(e) => setNovoEmail({ ...novoEmail, apartamento: e.target.value })}>
-                {[1, 2, 3, 4, 5, 6].map(num => {
+                {listaApartamentos.map(num => {
                   const apto = num.toString().padStart(2, '0');
                   return <MenuItem key={apto} value={apto}>{apto}</MenuItem>;
                 })}
@@ -2162,6 +2817,116 @@ const DashboardAdmin: React.FC = () => {
           <Button onClick={adicionarEmail} variant="contained">Adicionar</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Dialog Restaurar Backup */}
+      <Dialog open={dialogRestaurar} onClose={() => setDialogRestaurar(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Restaurar Backup do Sistema</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <strong>⚠️ ATENÇÃO:</strong> A restauração irá <strong>substituir TODOS os dados atuais</strong> pelos dados do backup selecionado.
+            Esta ação <strong>NÃO pode ser desfeita!</strong>
+          </Alert>
+
+          {backupsDisponiveis.length === 0 ? (
+            <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+              Nenhum backup disponível. Faça um backup primeiro.
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Selecione o backup que deseja restaurar:
+              </Typography>
+              <FormControl fullWidth>
+                <InputLabel>Selecione um Backup</InputLabel>
+                <Select
+                  value={backupSelecionado}
+                  onChange={(e) => setBackupSelecionado(e.target.value)}
+                  label="Selecione um Backup"
+                >
+                  {backupsDisponiveis.map((backup) => (
+                    <MenuItem key={backup.nome} value={backup.nome}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                        <span>{backup.nome}</span>
+                        <span style={{ color: '#666', fontSize: '0.9em' }}>
+                          {new Date(backup.dataModificacao).toLocaleString('pt-BR')} - {(backup.tamanho / 1024).toFixed(2)} KB
+                        </span>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogRestaurar(false)}>Cancelar</Button>
+          <Button
+            onClick={confirmarRestauracao}
+            variant="contained"
+            color="warning"
+            disabled={!backupSelecionado}
+          >
+            Restaurar Backup
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de Segurança (Senha para Backup ou Restaurar) */}
+      <Dialog open={dialogSeguranca} onClose={() => setDialogSeguranca(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {acaoSeguranca === 'backup' ? 'Confirmar Backup do Sistema' : 'Confirmar Restauração de Backup'}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Por motivos de segurança, digite a senha para {acaoSeguranca === 'backup' ? 'fazer o backup' : 'restaurar o backup'}.
+          </Typography>
+          <TextField
+            fullWidth
+            type="password"
+            label="Senha de Segurança"
+            value={senhaSeguranca}
+            onChange={(e) => setSenhaSeguranca(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                confirmarSenhaSeguranca();
+              }
+            }}
+            autoFocus
+            helperText="Digite a senha de segurança para continuar"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogSeguranca(false)}>Cancelar</Button>
+          <Button
+            onClick={confirmarSenhaSeguranca}
+            variant="contained"
+            color={acaoSeguranca === 'backup' ? 'success' : 'warning'}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Backdrop de Loading para Backup/Restauração */}
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1000,
+          backdropFilter: 'blur(5px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)'
+        }}
+        open={loading}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={60} thickness={4} sx={{ mb: 3 }} />
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            {loadingMessage}
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.8 }}>
+            Não feche esta janela
+          </Typography>
+        </Box>
+      </Backdrop>
     </Box>
   );
 };
