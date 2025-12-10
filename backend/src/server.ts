@@ -14,6 +14,8 @@ import relatoriosRoutes from './routes/relatoriosRoutes';
 import boletoRoutes from './routes/boletoRoutes';
 import condominosRoutes from './routes/condominosRoutes';
 import atasRoutes from './routes/atasRoutes';
+import fornecedoresRoutes from './routes/fornecedoresRoutes';
+import maoDeObraRoutes from './routes/maoDeObraRoutes';
 
 dotenv.config();
 
@@ -73,10 +75,12 @@ app.use('/api/relatorios', relatoriosRoutes);
 app.use('/api/boletos', boletoRoutes);
 app.use('/api/condominos', condominosRoutes);
 app.use('/api/atas', atasRoutes);
+app.use('/api/fornecedores', fornecedoresRoutes);
+app.use('/api/mao-de-obra', maoDeObraRoutes);
 
 // Rota de teste
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Servidor rodando', version: '3.0-FINAL-17h25', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', message: 'Servidor rodando' });
 });
 
 // Tratamento de erros

@@ -8,22 +8,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-// Configurar search_path para usar o schema 'demo'
-pool.on('connect', (client) => {
-  client.query('SET search_path TO demo, public');
-});
-
 // SQL para criar as tabelas
 export const createTables = async () => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    // Criar schema 'demo' se não existir
-    await client.query(`CREATE SCHEMA IF NOT EXISTS demo`);
-
-    // Definir search_path para usar o schema 'demo'
-    await client.query(`SET search_path TO demo, public`);
 
     // Tabela de usuários (administradores e moradores)
     await client.query(`
@@ -172,6 +161,21 @@ export const createTables = async () => {
       )
     `);
 
+    // Tabela de atas de reunião
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS atas_reuniao (
+        id SERIAL PRIMARY KEY,
+        data_reuniao DATE NOT NULL UNIQUE,
+        titulo VARCHAR(255),
+        nome_arquivo VARCHAR(255) NOT NULL,
+        caminho_arquivo TEXT NOT NULL,
+        tamanho INTEGER,
+        mime_type VARCHAR(100),
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        criado_por INTEGER REFERENCES usuarios(id)
+      )
+    `);
+
     // Tabela de pagamentos dos moradores
     await client.query(`
       CREATE TABLE IF NOT EXISTS pagamentos_moradores (
@@ -234,24 +238,70 @@ export const createTables = async () => {
       ON CONFLICT DO NOTHING
     `);
 
-    // Inserir condôminos padrão (apartamentos 01-06)
-    await client.query(`
-      INSERT INTO condominos (apartamento, nome_proprietario) VALUES
-      ('01', 'Proprietário Apto 01'),
-      ('02', 'Proprietário Apto 02'),
-      ('03', 'Proprietário Apto 03'),
-      ('04', 'Proprietário Apto 04'),
-      ('05', 'Proprietário Apto 05'),
-      ('06', 'Proprietário Apto 06')
-      ON CONFLICT (apartamento) DO NOTHING
-    `);
-
-    // Inserir configuração padrão do fundo de reserva
+    // Inserir configuração padrão do fundo de reserva e número de apartamentos
     await client.query(`
       INSERT INTO configuracoes (chave, valor, descricao) VALUES
       ('fundo_reserva_percentual', '10', 'Percentual do fundo de reserva sobre o valor do condomínio'),
-      ('fundo_reserva_valor_fixo', '0', 'Valor fixo do fundo de reserva (se > 0, ignora percentual)')
+      ('fundo_reserva_valor_fixo', '0', 'Valor fixo do fundo de reserva (se > 0, ignora percentual)'),
+      ('numero_apartamentos', '6', 'Número total de apartamentos no condomínio')
       ON CONFLICT (chave) DO NOTHING
+    `);
+
+    // Buscar número de apartamentos configurado
+    const configResult = await client.query(
+      `SELECT valor FROM configuracoes WHERE chave = 'numero_apartamentos'`
+    );
+    const numeroApartamentos = parseInt(configResult.rows[0]?.valor || '6', 10);
+
+    // Inserir condôminos dinamicamente baseado no número configurado
+    const condominosValues = [];
+    for (let i = 1; i <= numeroApartamentos; i++) {
+      const apto = i.toString().padStart(2, '0');
+      condominosValues.push(`('${apto}', 'Proprietário Apto ${apto}')`);
+    }
+
+    if (condominosValues.length > 0) {
+      await client.query(`
+        INSERT INTO condominos (apartamento, nome_proprietario) VALUES
+        ${condominosValues.join(',\n        ')}
+        ON CONFLICT (apartamento) DO NOTHING
+      `);
+    }
+
+    // Tabela de fornecedores
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS fornecedores (
+        id SERIAL PRIMARY KEY,
+        tipo VARCHAR(100) NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        endereco TEXT,
+        contato VARCHAR(255),
+        telefone VARCHAR(20),
+        email VARCHAR(255),
+        pessoa_contato VARCHAR(255),
+        observacoes TEXT,
+        ativo BOOLEAN DEFAULT true,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tabela de mão de obra
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS mao_de_obra (
+        id SERIAL PRIMARY KEY,
+        tipo VARCHAR(100) NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        endereco TEXT,
+        contato VARCHAR(255),
+        telefone VARCHAR(20),
+        email VARCHAR(255),
+        pessoa_contato VARCHAR(255),
+        observacoes TEXT,
+        ativo BOOLEAN DEFAULT true,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
     `);
 
     await client.query('COMMIT');

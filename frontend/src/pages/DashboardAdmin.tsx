@@ -36,7 +36,13 @@ import {
   Tabs,
   Tab,
   Backdrop,
-  CircularProgress
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  ListItemIcon,
+  Drawer
 } from '@mui/material';
 import {
   Logout,
@@ -60,12 +66,19 @@ import {
   CloudUpload,
   Backup,
   Restore,
-  Security
+  Security,
+  Store,
+  Build,
+  Business,
+  Savings,
+  AccountBalanceWallet
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import StatCard from '../components/StatCard';
+import Fornecedores from './Fornecedores';
+import MaoDeObra from './MaoDeObra';
 import {
   DespesaCondominio,
   BancoTransacao,
@@ -562,14 +575,16 @@ const DashboardAdmin: React.FC = () => {
   const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   const menuItems = [
-    { id: 'visao-geral', nome: 'Visão Geral', icone: <DashboardIcon /> },
-    { id: 'despesas', nome: 'Despesas', icone: <Receipt /> },
-    { id: 'banco', nome: 'Banco', icone: <AccountBalance /> },
-    { id: 'gas', nome: 'Gás', icone: <LocalFireDepartment /> },
-    { id: 'atas', nome: 'Atas de Reunião', icone: <PictureAsPdf /> },
-    { id: 'relatorios', nome: 'Relatórios', icone: <Assessment /> },
-    { id: 'configuracoes', nome: 'Configurações', icone: <Settings /> },
-    { id: 'seguranca', nome: 'Segurança', icone: <Security /> },
+    { id: 'visao-geral', nome: 'Visão Geral', icone: <DashboardIcon />, cor: '#4CAF50' },
+    { id: 'configuracoes', nome: 'Configurações', icone: <Settings />, cor: '#9C27B0' },
+    { id: 'banco', nome: 'Banco & Lançamentos', icone: <AccountBalance />, cor: '#2196F3' },
+    { id: 'despesas', nome: 'Despesas & Boletos', icone: <Receipt />, cor: '#FF9800' },
+    { id: 'gas', nome: 'Gás', icone: <LocalFireDepartment />, cor: '#F44336' },
+    { id: 'fornecedores', nome: 'Fornecedores', icone: <Store />, cor: '#00BCD4' },
+    { id: 'mao-de-obra', nome: 'Mão de Obra', icone: <Build />, cor: '#FFC107' },
+    { id: 'relatorios', nome: 'Relatórios', icone: <Assessment />, cor: '#3F51B5' },
+    { id: 'atas', nome: 'Atas de Reunião', icone: <PictureAsPdf />, cor: '#E91E63' },
+    { id: 'seguranca', nome: 'Segurança', icone: <Security />, cor: '#607D8B' },
   ];
 
   // Estatísticas para Visão Geral
@@ -735,31 +750,56 @@ const DashboardAdmin: React.FC = () => {
           </Toolbar>
 
           {/* Menu de Navegação Horizontal */}
-          <Box sx={{ borderBottom: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+          <Box sx={{
+            borderBottom: 1,
+            borderColor: 'rgba(255,255,255,0.2)',
+            backgroundColor: '#667eea',
+            display: 'flex',
+            justifyContent: 'flex-start',
+            pl: '48px',
+            pr: 2
+          }}>
             <Tabs
               value={secaoAtiva}
               onChange={(e, newValue) => setSecaoAtiva(newValue)}
-              variant="scrollable"
-              scrollButtons="auto"
               sx={{
+                minHeight: 90,
+                '& .MuiTabs-flexContainer': {
+                  gap: 2,
+                },
                 '& .MuiTab-root': {
-                  color: 'rgba(255,255,255,0.7)',
+                  color: 'rgba(255,255,255,0.8)',
                   textTransform: 'none',
-                  minHeight: 64,
-                  fontSize: '0.95rem',
+                  minHeight: 82,
+                  minWidth: 110,
+                  maxWidth: 130,
+                  fontSize: '0.85rem',
                   fontWeight: 500,
+                  padding: '12px 16px',
+                  margin: '4px 0',
+                  borderRadius: 2,
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  transition: 'all 0.3s ease',
+                  '& .MuiSvgIcon-root': {
+                    fontSize: '1.8rem',
+                  },
                   '&:hover': {
                     color: 'white',
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    transform: 'translateY(-2px)',
                   },
                   '&.Mui-selected': {
                     color: 'white',
                     fontWeight: 600,
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                   }
                 },
                 '& .MuiTabs-indicator': {
-                  backgroundColor: 'white',
-                  height: 3,
+                  display: 'none',
                 }
               }}
             >
@@ -769,7 +809,7 @@ const DashboardAdmin: React.FC = () => {
                   value={item.id}
                   label={item.nome}
                   icon={item.icone}
-                  iconPosition="start"
+                  iconPosition="top"
                 />
               ))}
             </Tabs>
@@ -782,32 +822,6 @@ const DashboardAdmin: React.FC = () => {
               {mensagem.texto}
             </Alert>
           )}
-
-          {/* Seleção de Mês/Ano */}
-          <Box mb={4}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Mês</InputLabel>
-                  <Select value={mes} label="Mês" onChange={(e) => setMes(Number(e.target.value))} sx={{ bgcolor: 'white', borderRadius: 2 }}>
-                    {meses.map((m, i) => (
-                      <MenuItem key={i} value={i + 1}>{m}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Ano</InputLabel>
-                  <Select value={ano} label="Ano" onChange={(e) => setAno(Number(e.target.value))} sx={{ bgcolor: 'white', borderRadius: 2 }}>
-                    {[2024, 2025, 2026, 2027].map((a) => (
-                      <MenuItem key={a} value={a}>{a}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Box>
 
           {/* Visão Geral */}
           {secaoAtiva === 'visao-geral' && (
@@ -1395,13 +1409,40 @@ const DashboardAdmin: React.FC = () => {
                 scrollButtons="auto"
                 sx={{
                   mb: 3,
-                  borderBottom: 1,
-                  borderColor: 'divider',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: 2,
+                  padding: '8px',
+                  '& .MuiTabs-flexContainer': {
+                    gap: 1,
+                  },
                   '& .MuiTab-root': {
                     textTransform: 'none',
                     minWidth: 120,
                     fontWeight: 600,
-                    fontSize: '0.95rem'
+                    fontSize: '0.95rem',
+                    color: '#667eea',
+                    backgroundColor: 'white',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 1.5,
+                    padding: '10px 20px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(102, 126, 234, 0.08)',
+                      borderColor: '#667eea',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 2px 6px rgba(102, 126, 234, 0.2)',
+                    },
+                    '&.Mui-selected': {
+                      color: 'white',
+                      backgroundColor: '#667eea',
+                      borderColor: '#667eea',
+                      fontWeight: 700,
+                      boxShadow: '0 3px 10px rgba(102, 126, 234, 0.4)',
+                    }
+                  },
+                  '& .MuiTabs-indicator': {
+                    display: 'none',
                   }
                 }}
               >
@@ -2007,7 +2048,6 @@ const DashboardAdmin: React.FC = () => {
                   </CardContent>
                 </Card>
               )}
-
             </Box>
           )}
 
@@ -2272,6 +2312,16 @@ const DashboardAdmin: React.FC = () => {
                 Os backups são salvos em <code>D:\Gestao-de-condominio\Backups\</code>
               </Alert>
             </Box>
+          )}
+
+          {/* Fornecedores */}
+          {secaoAtiva === 'fornecedores' && (
+            <Fornecedores />
+          )}
+
+          {/* Mão de Obra */}
+          {secaoAtiva === 'mao-de-obra' && (
+            <MaoDeObra />
           )}
 
           {/* Relatórios */}
