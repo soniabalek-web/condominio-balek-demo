@@ -823,6 +823,34 @@ const DashboardAdmin: React.FC = () => {
             </Alert>
           )}
 
+          {/* Seleção de Mês/Ano - Esconder para Fornecedores e Mão de Obra */}
+          {secaoAtiva !== 'fornecedores' && secaoAtiva !== 'mao-de-obra' && (
+            <Box mb={4}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} md={3}>
+                  <FormControl fullWidth>
+                    <InputLabel>Mês</InputLabel>
+                    <Select value={mes} label="Mês" onChange={(e) => setMes(Number(e.target.value))} sx={{ bgcolor: 'white', borderRadius: 2 }}>
+                      {meses.map((m, i) => (
+                        <MenuItem key={i} value={i + 1}>{m}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <FormControl fullWidth>
+                    <InputLabel>Ano</InputLabel>
+                    <Select value={ano} label="Ano" onChange={(e) => setAno(Number(e.target.value))} sx={{ bgcolor: 'white', borderRadius: 2 }}>
+                      {[2024, 2025, 2026, 2027].map((a) => (
+                        <MenuItem key={a} value={a}>{a}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+
           {/* Visão Geral */}
           {secaoAtiva === 'visao-geral' && (
             <Box>
