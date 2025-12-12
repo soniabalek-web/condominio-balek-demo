@@ -167,23 +167,48 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
             console.log('Dígitos únicos encontrados:', digitosUnicos);
 
             // Procurar sequência de 5 dígitos únicos consecutivos
+            // Priorizar sequências que fazem sentido para leitura de gás residencial
+            const candidatos: Array<{seq: string, valor: number, posicao: number}> = [];
+
             for (let i = 0; i <= digitosUnicos.length - 5; i++) {
               const seq = digitosUnicos.slice(i, i + 5).join('');
 
-              // Verificar se é um candidato válido (não todos zeros, não todos iguais)
-              if (seq !== '00000' && seq !== '11111' && seq !== '44444') {
-                // Remover zeros à esquerda
+              // Verificar se é um candidato válido
+              if (seq !== '00000' && seq !== '11111' && seq !== '44444' && seq !== '33333') {
                 const seqLimpa = seq.replace(/^0+/, '');
 
-                if (seqLimpa.length >= 4) {
-                  const parteInteira = seqLimpa.substring(0, seqLimpa.length - 3);
-                  const parteDecimal = seqLimpa.substring(seqLimpa.length - 3);
+                if (seqLimpa.length >= 4 && seqLimpa.length <= 5) {
+                  const valor = parseInt(seqLimpa, 10);
 
-                  leituraEncontrada = `${parteInteira}.${parteDecimal}`;
-                  console.log(`✓ Estratégia 3 - Dígitos únicos reconstruídos: ${seq} → ${leituraEncontrada}`);
-                  break;
+                  // Filtrar: leitura de gás residencial típica é entre 1.000 e 999.999 m³
+                  // Valores muito baixos (< 1000) ou repetitivos provavelmente são ruído
+                  if (valor >= 1000 && valor < 1000000) {
+                    candidatos.push({seq, valor, posicao: i});
+                    console.log(`Candidato ${i}: ${seq} (valor: ${valor})`);
+                  }
                 }
               }
+            }
+
+            // Se encontrou candidatos, pegar o que tem padrão mais razoável
+            // Priorizar valores entre 10.000 e 200.000 (faixa típica)
+            if (candidatos.length > 0) {
+              // Ordenar por "razoabilidade": preferir valores entre 10k e 200k
+              candidatos.sort((a, b) => {
+                const scoreA = (a.valor >= 10000 && a.valor <= 200000) ? 1 : 0;
+                const scoreB = (b.valor >= 10000 && b.valor <= 200000) ? 1 : 0;
+
+                if (scoreA !== scoreB) return scoreB - scoreA; // Maior score primeiro
+                return a.posicao - b.posicao; // Desempate: posição mais cedo
+              });
+
+              const melhor = candidatos[0];
+              const seqLimpa = melhor.seq.replace(/^0+/, '');
+              const parteInteira = seqLimpa.substring(0, seqLimpa.length - 3);
+              const parteDecimal = seqLimpa.substring(seqLimpa.length - 3);
+
+              leituraEncontrada = `${parteInteira}.${parteDecimal}`;
+              console.log(`✓ Estratégia 3 - Melhor candidato: ${melhor.seq} (pos ${melhor.posicao}) → ${leituraEncontrada}`);
             }
           }
 
