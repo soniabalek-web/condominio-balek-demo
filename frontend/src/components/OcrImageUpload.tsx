@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -17,17 +17,24 @@ import {
 import Tesseract from 'tesseract.js';
 
 interface OcrImageUploadProps {
-  onOcrComplete: (text: string) => void;
+  onOcrComplete: (text: string, imageBase64?: string) => void;
   apartamento: string;
+  initialImage?: string; // Foto já salva no banco (base64)
+  isSaved?: boolean; // Se true, mostra check verde indicando que foi salva
 }
 
-const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => {
-  const [image, setImage] = useState<string | null>(null);
+const OcrImageUpload = ({ onOcrComplete, apartamento, initialImage, isSaved }: OcrImageUploadProps) => {
+  const [image, setImage] = useState<string | null>(initialImage || null);
   const [loading, setLoading] = useState(false);
   const [ocrResult, setOcrResult] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [apartamentoWarning, setApartamentoWarning] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Atualizar imagem quando initialImage mudar (ao trocar de mês)
+  useEffect(() => {
+    setImage(initialImage || null);
+  }, [initialImage]);
 
   // Função para pré-processar a imagem (inverter cores, aumentar contraste e binarizar)
   const preprocessImage = (imageData: string): Promise<string> => {
@@ -260,9 +267,11 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
 
         if (leituraEncontrada) {
           setOcrResult(leituraEncontrada.replace('.', ','));
-          onOcrComplete(leituraEncontrada);
+          onOcrComplete(leituraEncontrada, imageData);
         } else {
           setError('Não foi possível identificar a leitura. Por favor, digite manualmente.');
+          // IMPORTANTE: Mesmo sem leitura, salvar a foto!
+          onOcrComplete('', imageData);
         }
 
         // Validar número do apartamento na imagem
@@ -332,6 +341,28 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
         </Button>
       ) : (
         <Paper elevation={2} sx={{ p: 1, mb: 1, position: 'relative' }}>
+          {/* Ícone verde de salvo */}
+          {isSaved && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 4,
+                left: 4,
+                bgcolor: '#4caf50',
+                borderRadius: '50%',
+                width: 28,
+                height: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}
+            >
+              <CheckCircle sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+          )}
+
           <IconButton
             size="small"
             onClick={handleClear}
@@ -370,11 +401,10 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
 
           {ocrResult && !loading && (
             <Alert
-              icon={<CheckCircle fontSize="small" />}
-              severity="success"
+              severity="info"
               sx={{ py: 0, mb: apartamentoWarning ? 1 : 0 }}
             >
-              Leitura: {ocrResult} m³
+              <strong>Sugestão OCR:</strong> {ocrResult} m³ <em>(verifique e corrija se necessário)</em>
             </Alert>
           )}
 

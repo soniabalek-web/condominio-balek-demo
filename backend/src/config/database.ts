@@ -213,6 +213,12 @@ export const createTables = async () => {
       ADD COLUMN IF NOT EXISTS nome_morador VARCHAR(255)
     `);
 
+    // Adicionar coluna foto_medidor na tabela leituras_gas se não existir (migração)
+    await client.query(`
+      ALTER TABLE leituras_gas
+      ADD COLUMN IF NOT EXISTS foto_medidor TEXT
+    `);
+
     // Tabela de configurações do condomínio
     await client.query(`
       CREATE TABLE IF NOT EXISTS configuracoes (

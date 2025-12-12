@@ -151,6 +151,8 @@ const DashboardAdmin: React.FC = () => {
   const [valorM3, setValorM3] = useState(0);
   const [leiturasInput, setLeiturasInput] = useState<any>({});
   const [leiturasAnteriores, setLeiturasAnteriores] = useState<any>({});
+  const [fotosMedidores, setFotosMedidores] = useState<any>({}); // Armazena fotos base64 dos medidores
+  const [fotosSalvas, setFotosSalvas] = useState<any>({}); // Controla quais fotos foram salvas (para mostrar check verde)
   const [novoEmail, setNovoEmail] = useState({ email: '', apartamento: '' });
   const [mensagem, setMensagem] = useState<{ tipo: 'success' | 'error', texto: string | React.ReactNode } | null>(null);
   const [abaConfig, setAbaConfig] = useState(0);
@@ -203,6 +205,83 @@ const DashboardAdmin: React.FC = () => {
     };
     carregarAtas();
   }, [secaoAtiva]);
+
+  // Auto-carregar dados de gás quando abrir a aba de Gás
+  useEffect(() => {
+    const carregarDadosGas = async () => {
+      if (secaoAtiva === 'gas') {
+        // Buscar leituras do mês anterior para preencher como leitura anterior
+        let mesAnterior = mes - 1;
+        let anoAnterior = ano;
+        if (mesAnterior < 1) {
+          mesAnterior = 12;
+          anoAnterior = ano - 1;
+        }
+
+        try {
+          const response = await api.get(`/gas/leituras/${mesAnterior}/${anoAnterior}`);
+          const leiturasAnt: any = {};
+          response.data.forEach((leitura: any) => {
+            leiturasAnt[leitura.apartamento] = leitura.leitura_atual;
+          });
+          setLeiturasAnteriores(leiturasAnt);
+        } catch (error) {
+          console.error('Erro ao carregar leituras anteriores:', error);
+          setLeiturasAnteriores({});
+        }
+
+        // Buscar leituras do mês atual (se já houver registros salvos)
+        try {
+          const responseAtual = await api.get(`/gas/leituras/${mes}/${ano}`);
+
+          const leiturasAtu: any = {};
+          const fotosCarregadas: any = {};
+
+          if (responseAtual.data.length > 0) {
+            // Se já houver leituras salvas, preencher com elas
+            responseAtual.data.forEach((leitura: any) => {
+              leiturasAtu[leitura.apartamento] = leitura.leitura_atual;
+
+              // Carregar fotos salvas do banco de dados
+              if (leitura.foto_medidor) {
+                fotosCarregadas[leitura.apartamento] = leitura.foto_medidor;
+              }
+            });
+
+            // Pegar valor do m³ do primeiro registro
+            if (responseAtual.data[0].valor_m3) {
+              setValorM3(parseFloat(responseAtual.data[0].valor_m3));
+            }
+          } else {
+            // Se não houver, inicializar vazias
+            listaApartamentos.forEach(apto => {
+              leiturasAtu[apto] = '';
+            });
+          }
+
+          setLeiturasInput(leiturasAtu);
+
+          // Atualizar fotos (limpa todas e carrega apenas as que existem no banco)
+          setFotosMedidores(fotosCarregadas);
+        } catch (error) {
+          console.error('Erro ao carregar leituras atuais:', error);
+          // Se der erro, inicializar vazias
+          const leiturasAtu: any = {};
+          listaApartamentos.forEach(apto => {
+            leiturasAtu[apto] = '';
+          });
+          setLeiturasInput(leiturasAtu);
+
+          // Limpar fotos em caso de erro
+          setFotosMedidores({});
+        }
+
+        // Limpar status de salvo ao mudar de mês
+        setFotosSalvas({});
+      }
+    };
+    carregarDadosGas();
+  }, [secaoAtiva, mes, ano]);
 
   const tentarCopiarSaldoMesAnterior = async (): Promise<number | null> => {
     try {
@@ -488,14 +567,64 @@ const DashboardAdmin: React.FC = () => {
       const leituras = Object.keys(leiturasInput).map(apto => ({
         apartamento: apto,
         leitura_atual: parseFloat(leiturasInput[apto]),
-        leitura_anterior: leiturasAnteriores[apto] ? parseFloat(leiturasAnteriores[apto]) : null
+        leitura_anterior: leiturasAnteriores[apto] ? parseFloat(leiturasAnteriores[apto]) : null,
+        foto_medidor: fotosMedidores[apto] || null  // Incluir foto do medidor (base64)
       }));
 
       await api.post('/gas/leituras/lote', { mes, ano, valor_m3: valorM3, leituras });
-      setDialogGas(false);
-      setLeiturasInput({});
-      setLeiturasAnteriores({});
+
+      // NÃO limpar fotos! Manter visíveis com check verde
+      // Marcar todas as fotos como salvas
+      const novasFotosSalvas: any = {};
+      Object.keys(fotosMedidores).forEach(apto => {
+        novasFotosSalvas[apto] = true;
+      });
+      setFotosSalvas(novasFotosSalvas);
+
+      // Mostrar mensagem de sucesso
       setMensagem({ tipo: 'success', texto: 'Leituras salvas com sucesso!' });
+
+      // Recarregar dados da aba de gás (busca leituras atualizadas do banco)
+      // Buscar leituras do mês anterior
+      let mesAnterior = mes - 1;
+      let anoAnterior = ano;
+      if (mesAnterior < 1) {
+        mesAnterior = 12;
+        anoAnterior = ano - 1;
+      }
+
+      try {
+        const response = await api.get(`/gas/leituras/${mesAnterior}/${anoAnterior}`);
+        const leiturasAnt: any = {};
+        response.data.forEach((leitura: any) => {
+          leiturasAnt[leitura.apartamento] = leitura.leitura_atual;
+        });
+        setLeiturasAnteriores(leiturasAnt);
+      } catch (error) {
+        setLeiturasAnteriores({});
+      }
+
+      // Buscar leituras do mês atual (recém salvas)
+      try {
+        const responseAtual = await api.get(`/gas/leituras/${mes}/${ano}`);
+        const leiturasAtu: any = {};
+
+        if (responseAtual.data.length > 0) {
+          responseAtual.data.forEach((leitura: any) => {
+            leiturasAtu[leitura.apartamento] = leitura.leitura_atual;
+          });
+
+          if (responseAtual.data[0].valor_m3) {
+            setValorM3(parseFloat(responseAtual.data[0].valor_m3));
+          }
+        }
+
+        setLeiturasInput(leiturasAtu);
+      } catch (error) {
+        console.error('Erro ao recarregar leituras:', error);
+      }
+
+      // Recarregar dados gerais (para atualizar outras seções se necessário)
       carregarDados();
     } catch (error: any) {
       setMensagem({ tipo: 'error', texto: error.response?.data?.erro || 'Erro ao salvar leituras' });
@@ -1435,8 +1564,15 @@ const DashboardAdmin: React.FC = () => {
                           />
                           <OcrImageUpload
                             apartamento={apto}
-                            onOcrComplete={(value) => {
-                              setLeiturasInput({ ...leiturasInput, [apto]: value });
+                            initialImage={fotosMedidores[apto]}
+                            isSaved={fotosSalvas[apto]}
+                            onOcrComplete={(value, imageBase64) => {
+                              setLeiturasInput(prev => ({ ...prev, [apto]: value }));
+                              if (imageBase64) {
+                                setFotosMedidores(prev => ({ ...prev, [apto]: imageBase64 }));
+                                // Resetar status de salvo quando modificar
+                                setFotosSalvas(prev => ({ ...prev, [apto]: false }));
+                              }
                             }}
                           />
                         </Grid>

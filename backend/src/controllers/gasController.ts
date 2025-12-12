@@ -72,7 +72,7 @@ export const registrarLeiturasLote = async (req: Request, res: Response) => {
     const resultados = [];
 
     for (const leitura of leituras) {
-      const { apartamento, leitura_atual, leitura_anterior: leituraAnteriorFornecida } = leitura;
+      const { apartamento, leitura_atual, leitura_anterior: leituraAnteriorFornecida, foto_medidor } = leitura;
 
       if (!apartamento || leitura_atual === undefined) {
         continue;
@@ -111,12 +111,12 @@ export const registrarLeiturasLote = async (req: Request, res: Response) => {
       }
 
       const result = await client.query(
-        `INSERT INTO leituras_gas (apartamento, mes, ano, leitura_atual, leitura_anterior, consumo, valor_m3, valor_total)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO leituras_gas (apartamento, mes, ano, leitura_atual, leitura_anterior, consumo, valor_m3, valor_total, foto_medidor)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          ON CONFLICT (apartamento, mes, ano)
-         DO UPDATE SET leitura_atual = $4, leitura_anterior = $5, consumo = $6, valor_m3 = $7, valor_total = $8
+         DO UPDATE SET leitura_atual = $4, leitura_anterior = $5, consumo = $6, valor_m3 = $7, valor_total = $8, foto_medidor = $9
          RETURNING *`,
-        [aptoFormatado, mes, ano, leitura_atual, leitura_anterior, consumo, valor_m3, valor_total]
+        [aptoFormatado, mes, ano, leitura_atual, leitura_anterior, consumo, valor_m3, valor_total, foto_medidor || null]
       );
 
       resultados.push(result.rows[0]);
