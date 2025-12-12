@@ -48,6 +48,24 @@ interface MaoDeObra {
 const MaoDeObra = () => {
   const [profissionais, setProfissionais] = useState<MaoDeObra[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
+
+  // Função para obter cor do tipo
+  const getCorTipo = (tipo: string) => {
+    const cores: { [key: string]: { bg: string; text: string } } = {
+      'Eletricista': { bg: '#FFF9C4', text: '#F57F17' },
+      'Encanador': { bg: '#E1F5FE', text: '#0277BD' },
+      'Pedreiro': { bg: '#EFEBE9', text: '#5D4037' },
+      'Pintor': { bg: '#F3E5F5', text: '#7B1FA2' },
+      'Marceneiro': { bg: '#FFF3E0', text: '#E65100' },
+      'Serralheiro': { bg: '#ECEFF1', text: '#455A64' },
+      'Vidraceiro': { bg: '#E0F2F1', text: '#00695C' },
+      'Jardineiro': { bg: '#E8F5E9', text: '#2E7D32' },
+      'Gesseiro': { bg: '#E3F2FD', text: '#1565C0' },
+      'Outros': { bg: '#F5F5F5', text: '#616161' }
+    };
+    return cores[tipo] || { bg: '#F5F5F5', text: '#616161' };
+  };
+
   const [dialogAberto, setDialogAberto] = useState(false);
   const [profissionalEditando, setProfissionalEditando] = useState<MaoDeObra | null>(null);
   const [formData, setFormData] = useState({
@@ -178,25 +196,40 @@ const MaoDeObra = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {profissionais.map((profissional) => (
-              <TableRow key={profissional.id}>
-                <TableCell>
-                  <Chip label={profissional.tipo} size="small" color="primary" />
-                </TableCell>
-                <TableCell>{profissional.nome}</TableCell>
-                <TableCell>{profissional.contato || '-'}</TableCell>
-                <TableCell>{profissional.telefone || '-'}</TableCell>
-                <TableCell>{profissional.email || '-'}</TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => abrirDialog(profissional)} size="small">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => excluir(profissional.id)} size="small" color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {profissionais.map((profissional) => {
+              const cor = getCorTipo(profissional.tipo);
+              return (
+                <TableRow key={profissional.id}>
+                  <TableCell>
+                    <Chip
+                      label={profissional.tipo}
+                      size="small"
+                      sx={{
+                        backgroundColor: cor.bg,
+                        color: cor.text,
+                        fontWeight: 600,
+                        minWidth: '110px',
+                        '& .MuiChip-label': {
+                          px: 2
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>{profissional.nome}</TableCell>
+                  <TableCell>{profissional.contato || '-'}</TableCell>
+                  <TableCell>{profissional.telefone || '-'}</TableCell>
+                  <TableCell>{profissional.email || '-'}</TableCell>
+                  <TableCell align="right">
+                    <IconButton onClick={() => abrirDialog(profissional)} size="small">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => excluir(profissional.id)} size="small" color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>

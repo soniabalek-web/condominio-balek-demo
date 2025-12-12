@@ -48,6 +48,22 @@ interface Fornecedor {
 const Fornecedores = () => {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
+
+  // Função para obter cor do tipo
+  const getCorTipo = (tipo: string) => {
+    const cores: { [key: string]: { bg: string; text: string } } = {
+      'Limpeza': { bg: '#E3F2FD', text: '#1565C0' },
+      'Manutenção': { bg: '#FFF3E0', text: '#E65100' },
+      'Jardinagem': { bg: '#E8F5E9', text: '#2E7D32' },
+      'Segurança': { bg: '#FCE4EC', text: '#C2185B' },
+      'Elétrica': { bg: '#FFF9C4', text: '#F57F17' },
+      'Hidráulica': { bg: '#E1F5FE', text: '#0277BD' },
+      'Pintura': { bg: '#F3E5F5', text: '#7B1FA2' },
+      'Tecnologia': { bg: '#E0F2F1', text: '#00695C' },
+      'Outros': { bg: '#EFEBE9', text: '#4E342E' }
+    };
+    return cores[tipo] || { bg: '#F5F5F5', text: '#616161' };
+  };
   const [dialogAberto, setDialogAberto] = useState(false);
   const [fornecedorEditando, setFornecedorEditando] = useState<Fornecedor | null>(null);
   const [formData, setFormData] = useState({
@@ -178,25 +194,40 @@ const Fornecedores = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {fornecedores.map((fornecedor) => (
-              <TableRow key={fornecedor.id}>
-                <TableCell>
-                  <Chip label={fornecedor.tipo} size="small" color="primary" />
-                </TableCell>
-                <TableCell>{fornecedor.nome}</TableCell>
-                <TableCell>{fornecedor.contato || '-'}</TableCell>
-                <TableCell>{fornecedor.telefone || '-'}</TableCell>
-                <TableCell>{fornecedor.email || '-'}</TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => abrirDialog(fornecedor)} size="small">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => excluir(fornecedor.id)} size="small" color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {fornecedores.map((fornecedor) => {
+              const cor = getCorTipo(fornecedor.tipo);
+              return (
+                <TableRow key={fornecedor.id}>
+                  <TableCell>
+                    <Chip
+                      label={fornecedor.tipo}
+                      size="small"
+                      sx={{
+                        backgroundColor: cor.bg,
+                        color: cor.text,
+                        fontWeight: 600,
+                        minWidth: '110px',
+                        '& .MuiChip-label': {
+                          px: 2
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>{fornecedor.nome}</TableCell>
+                  <TableCell>{fornecedor.contato || '-'}</TableCell>
+                  <TableCell>{fornecedor.telefone || '-'}</TableCell>
+                  <TableCell>{fornecedor.email || '-'}</TableCell>
+                  <TableCell align="right">
+                    <IconButton onClick={() => abrirDialog(fornecedor)} size="small">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => excluir(fornecedor.id)} size="small" color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
