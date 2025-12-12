@@ -29,7 +29,7 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
   const [apartamentoWarning, setApartamentoWarning] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Função para pré-processar a imagem (inverter cores para melhorar OCR de texto branco)
+  // Função para pré-processar a imagem (inverter cores, aumentar contraste e binarizar)
   const preprocessImage = (imageData: string): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -37,21 +37,36 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d')!;
 
-        canvas.width = img.width;
-        canvas.height = img.height;
+        // Aumentar escala para melhorar OCR
+        const scale = 2;
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
 
-        // Desenhar imagem original
-        ctx.drawImage(img, 0, 0);
+        // Desenhar imagem original em escala maior
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         // Obter pixels
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Inverter cores (branco vira preto, preto vira branco)
+        // Passo 1: Inverter cores + Aumentar contraste + Binarização
         for (let i = 0; i < data.length; i += 4) {
-          data[i] = 255 - data[i];       // R
-          data[i + 1] = 255 - data[i + 1]; // G
-          data[i + 2] = 255 - data[i + 2]; // B
+          // Inverter cores
+          let r = 255 - data[i];
+          let g = 255 - data[i + 1];
+          let b = 255 - data[i + 2];
+
+          // Converter para escala de cinza
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+          // Binarização com threshold (preto ou branco puro)
+          // Threshold ajustado para destacar texto que era branco (agora preto após inversão)
+          const threshold = 128;
+          const binarized = gray < threshold ? 0 : 255;
+
+          data[i] = binarized;     // R
+          data[i + 1] = binarized; // G
+          data[i + 2] = binarized; // B
           // Alpha permanece o mesmo
         }
 
