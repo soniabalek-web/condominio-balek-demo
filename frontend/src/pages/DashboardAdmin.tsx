@@ -79,6 +79,7 @@ import api from '../services/api';
 import StatCard from '../components/StatCard';
 import Fornecedores from './Fornecedores';
 import MaoDeObra from './MaoDeObra';
+import OcrImageUpload from '../components/OcrImageUpload';
 import {
   DespesaCondominio,
   BancoTransacao,
@@ -1370,12 +1371,12 @@ const DashboardAdmin: React.FC = () => {
             <Box>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h4" fontWeight={700} sx={{ color: '#1a1a2e' }}>
-                  Leituras de Gás
+                  Registrar Leituras de Gás - {meses[mes - 1]} {ano}
                 </Typography>
                 <Button
                   variant="contained"
-                  startIcon={<Add />}
-                  onClick={abrirDialogGas}
+                  startIcon={<Save />}
+                  onClick={salvarLeituras}
                   sx={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     borderRadius: 2,
@@ -1384,42 +1385,97 @@ const DashboardAdmin: React.FC = () => {
                     fontWeight: 600
                   }}
                 >
-                  Registrar Leituras
+                  Salvar Todas
                 </Button>
               </Box>
 
-              <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-                <CardContent>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>Apto</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Leit. Anterior</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Leit. Atual</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Consumo</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>Valor</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {leituras.map((l) => (
-                        <TableRow key={l.id} sx={{ '&:hover': { bgcolor: '#f8f9fa' } }}>
-                          <TableCell><Chip label={l.apartamento} size="small" color="primary" /></TableCell>
-                          <TableCell align="right">{l.leitura_anterior ? Number(l.leitura_anterior).toFixed(3) : '-'}</TableCell>
-                          <TableCell align="right">{l.leitura_atual ? Number(l.leitura_atual).toFixed(3) : '-'}</TableCell>
-                          <TableCell align="right">{l.consumo ? Number(l.consumo).toFixed(3) : '-'}</TableCell>
-                          <TableCell align="right">
-                            <Chip
-                              label={l.valor_total ? formatarMoeda(l.valor_total) : '-'}
-                              size="small"
-                              sx={{ fontWeight: 600 }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <Stack spacing={3}>
+                <TextField
+                  fullWidth
+                  label="Valor do m³ (R$)"
+                  type="number"
+                  value={valorM3}
+                  onChange={(e) => setValorM3(parseFloat(e.target.value))}
+                  helperText="Preço por metro cúbico"
+                  sx={{ maxWidth: 300 }}
+                />
+                {listaApartamentos.map(num => {
+                  const apto = num.toString().padStart(2, '0');
+                  const leituraAnterior = parseFloat(leiturasAnteriores[apto] || 0);
+                  const leituraAtual = parseFloat(leiturasInput[apto] || 0);
+                  const consumo = leituraAtual && leituraAnterior ? leituraAtual - leituraAnterior : 0;
+                  const valor = consumo && valorM3 ? consumo * valorM3 : 0;
+
+                  return (
+                    <Paper key={apto} elevation={2} sx={{ p: 2, bgcolor: '#f8f9fa' }}>
+                      <Typography variant="h6" gutterBottom sx={{ color: '#667eea', fontWeight: 600 }}>
+                        Apartamento {apto}
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <TextField
+                            fullWidth
+                            label="Leitura Anterior"
+                            type="number"
+                            value={leiturasAnteriores[apto] || ''}
+                            onChange={(e) => setLeiturasAnteriores({ ...leiturasAnteriores, [apto]: e.target.value })}
+                            helperText="Default: mês anterior"
+                            size="small"
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <TextField
+                            fullWidth
+                            label="Leitura Atual"
+                            type="number"
+                            value={leiturasInput[apto] || ''}
+                            onChange={(e) => setLeiturasInput({ ...leiturasInput, [apto]: e.target.value })}
+                            size="small"
+                          />
+                          <OcrImageUpload
+                            apartamento={apto}
+                            onOcrComplete={(value) => {
+                              setLeiturasInput({ ...leiturasInput, [apto]: value });
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <TextField
+                            fullWidth
+                            label="Consumo (m³)"
+                            value={consumo > 0 ? consumo.toFixed(2) : '0.00'}
+                            InputProps={{ readOnly: true }}
+                            size="small"
+                            sx={{
+                              '& .MuiInputBase-input': {
+                                bgcolor: '#e8f5e9',
+                                fontWeight: 600,
+                                color: consumo > 0 ? '#2e7d32' : '#666'
+                              }
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <TextField
+                            fullWidth
+                            label="Valor (R$)"
+                            value={valor > 0 ? `R$ ${valor.toFixed(2)}` : 'R$ 0.00'}
+                            InputProps={{ readOnly: true }}
+                            size="small"
+                            sx={{
+                              '& .MuiInputBase-input': {
+                                bgcolor: '#fff3e0',
+                                fontWeight: 600,
+                                color: valor > 0 ? '#e65100' : '#666'
+                              }
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  );
+                })}
+              </Stack>
             </Box>
           )}
 
@@ -2695,6 +2751,12 @@ const DashboardAdmin: React.FC = () => {
                         value={leiturasInput[apto] || ''}
                         onChange={(e) => setLeiturasInput({ ...leiturasInput, [apto]: e.target.value })}
                         size="small"
+                      />
+                      <OcrImageUpload
+                        apartamento={apto}
+                        onOcrComplete={(value) => {
+                          setLeiturasInput({ ...leiturasInput, [apto]: value });
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
