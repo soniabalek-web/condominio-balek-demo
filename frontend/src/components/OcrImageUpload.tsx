@@ -130,16 +130,14 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
 
         if (todosNumeros) {
           // Estratégia 1: Procurar por 8 dígitos que começam com zeros (00073080)
-          // Este é o padrão mais confiável do medidor LAO
           for (const num of todosNumeros) {
             if (num.length === 8 && num.startsWith('000')) {
-              // Remover zeros à esquerda dos primeiros 5 dígitos
-              const parte1 = num.substring(0, 5); // 00073
-              const parte2 = num.substring(5, 8); // 080
-              const parte1Limpa = parseInt(parte1, 10).toString(); // 73
+              const parte1 = num.substring(0, 5);
+              const parte2 = num.substring(5, 8);
+              const parte1Limpa = parseInt(parte1, 10).toString();
 
               leituraEncontrada = `${parte1Limpa}.${parte2}`;
-              console.log(`✓ Estratégia 1 - Número de 8 dígitos com zeros: ${num} → ${leituraEncontrada}`);
+              console.log(`✓ Estratégia 1 - 8 dígitos com zeros: ${num} → ${leituraEncontrada}`);
               break;
             }
           }
@@ -147,50 +145,73 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
           // Estratégia 2: Procurar por 5-6 dígitos que começam com zero
           if (!leituraEncontrada) {
             for (const num of todosNumeros) {
-              if ((num.length === 5 || num.length === 6) && num.startsWith('0')) {
-                // Remover zeros à esquerda
+              if ((num.length === 5 || num.length === 6) && num.startsWith('0') && !num.startsWith('00012')) {
                 const numLimpo = num.replace(/^0+/, '');
 
-                if (numLimpo.length === 4 || numLimpo.length === 5) {
+                if (numLimpo.length >= 4 && numLimpo.length <= 5) {
                   const parteInteira = numLimpo.substring(0, numLimpo.length - 3);
                   const parteDecimal = numLimpo.substring(numLimpo.length - 3);
 
                   leituraEncontrada = `${parteInteira}.${parteDecimal}`;
-                  console.log(`✓ Estratégia 2 - Número de ${num.length} dígitos com zero inicial: ${num} → ${leituraEncontrada}`);
+                  console.log(`✓ Estratégia 2 - ${num.length} dígitos com zero: ${num} → ${leituraEncontrada}`);
                   break;
                 }
               }
             }
           }
 
-          // Estratégia 3: Procurar por 5 dígitos sem zero inicial (73080)
+          // Estratégia 3: Reconstruir a partir de dígitos únicos consecutivos
+          // O OCR pode estar lendo cada dígito separadamente: 7, 3, 0, 8, 0
+          if (!leituraEncontrada) {
+            const digitosUnicos = todosNumeros.filter(n => n.length === 1);
+            console.log('Dígitos únicos encontrados:', digitosUnicos);
+
+            // Procurar sequência de 5 dígitos únicos consecutivos
+            for (let i = 0; i <= digitosUnicos.length - 5; i++) {
+              const seq = digitosUnicos.slice(i, i + 5).join('');
+
+              // Verificar se é um candidato válido (não todos zeros, não todos iguais)
+              if (seq !== '00000' && seq !== '11111' && seq !== '44444') {
+                // Remover zeros à esquerda
+                const seqLimpa = seq.replace(/^0+/, '');
+
+                if (seqLimpa.length >= 4) {
+                  const parteInteira = seqLimpa.substring(0, seqLimpa.length - 3);
+                  const parteDecimal = seqLimpa.substring(seqLimpa.length - 3);
+
+                  leituraEncontrada = `${parteInteira}.${parteDecimal}`;
+                  console.log(`✓ Estratégia 3 - Dígitos únicos reconstruídos: ${seq} → ${leituraEncontrada}`);
+                  break;
+                }
+              }
+            }
+          }
+
+          // Estratégia 4: Procurar por 5 dígitos (73080)
           if (!leituraEncontrada) {
             for (const num of todosNumeros) {
-              if (num.length === 5 && !num.startsWith('0')) {
+              if (num.length === 5 && !num.startsWith('0') && num !== '23000') {
                 const parteInteira = num.substring(0, 2);
                 const parteDecimal = num.substring(2, 5);
 
                 leituraEncontrada = `${parteInteira}.${parteDecimal}`;
-                console.log(`✓ Estratégia 3 - Número de 5 dígitos: ${num} → ${leituraEncontrada}`);
+                console.log(`✓ Estratégia 4 - 5 dígitos: ${num} → ${leituraEncontrada}`);
                 break;
               }
             }
           }
 
-          // Estratégia 4: Procurar por dois grupos consecutivos (2-3 dígitos + 3 dígitos)
+          // Estratégia 5: Dois grupos consecutivos (2-3 dígitos + 3 dígitos)
           if (!leituraEncontrada) {
             for (let i = 0; i < todosNumeros.length - 1; i++) {
               const num1 = todosNumeros[i];
               const num2 = todosNumeros[i + 1];
 
-              // Padrão: num1 (2-3 dígitos) + num2 (exatamente 3 dígitos)
-              // Evitar número do apartamento (01-06) pegando apenas se num1 >= 2 dígitos
-              if (num1.length >= 2 && num1.length <= 3 && num2.length === 3) {
-                // Remover zeros à esquerda de num1
+              if (num1.length >= 2 && num1.length <= 3 && num2.length === 3 && num2 !== '055') {
                 const num1Limpo = parseInt(num1, 10).toString();
 
                 leituraEncontrada = `${num1Limpo}.${num2}`;
-                console.log(`✓ Estratégia 4 - Dois grupos: ${num1} + ${num2} → ${leituraEncontrada}`);
+                console.log(`✓ Estratégia 5 - Dois grupos: ${num1} + ${num2} → ${leituraEncontrada}`);
                 break;
               }
             }
