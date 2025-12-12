@@ -9,6 +9,7 @@ export const TIPOS_FORNECEDORES = [
   'Escritório',
   'Manutenção em Geral',
   'Supermercados',
+  'Gás',
   'Outros'
 ];
 
