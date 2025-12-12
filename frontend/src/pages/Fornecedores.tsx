@@ -205,9 +205,12 @@ const Fornecedores = () => {
                         backgroundColor: cor.bg,
                         color: cor.text,
                         fontWeight: 600,
-                        minWidth: '110px',
+                        width: '220px',
+                        justifyContent: 'center',
                         '& .MuiChip-label': {
-                          px: 2
+                          px: 2,
+                          display: 'block',
+                          textAlign: 'center'
                         }
                       }}
                     />
