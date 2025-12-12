@@ -109,47 +109,52 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
 
         let leituraEncontrada = '';
 
-        // Estratégia 1: Procurar por número com vírgula ou ponto separando 3 dígitos
-        let leituraMatch = text.match(/(\d{1,3})[,.\s](\d{3})/);
+        // Extrair todos os números da imagem
+        const todosNumeros = text.match(/\d+/g);
+        console.log('Todos os números encontrados:', todosNumeros);
 
-        if (leituraMatch) {
-          const parteInteira = leituraMatch[1];
-          const parteDecimal = leituraMatch[2];
-          leituraEncontrada = `${parteInteira}.${parteDecimal}`;
-          console.log('Estratégia 1 - Leitura com separador:', leituraEncontrada);
-        }
+        if (todosNumeros) {
+          // Estratégia 1: Procurar por sequência de exatamente 4-6 dígitos (não mais que isso)
+          // O medidor tem 5 dígitos (73080), outros números são muito maiores
+          const sequenciasValidas: string[] = [];
 
-        // Estratégia 2: Se não encontrou, procurar por sequência de 4-5 dígitos seguidos
-        if (!leituraEncontrada) {
-          const sequencias = text.match(/\b(\d{4,5})\b/g);
-          if (sequencias && sequencias.length > 0) {
-            // Pegar a maior sequência (provavelmente é a leitura)
-            const maiorSeq = sequencias.reduce((a, b) => a.length >= b.length ? a : b);
-            // Se for 5 dígitos: XX.XXX, se for 4: X.XXX
-            if (maiorSeq.length === 5) {
-              leituraEncontrada = `${maiorSeq.substring(0, 2)}.${maiorSeq.substring(2)}`;
-            } else if (maiorSeq.length === 4) {
-              leituraEncontrada = `${maiorSeq.substring(0, 1)}.${maiorSeq.substring(1)}`;
+          for (const num of todosNumeros) {
+            // Aceitar apenas números de 4 a 6 dígitos (ignora números grandes como código de barras)
+            if (num.length >= 4 && num.length <= 6) {
+              sequenciasValidas.push(num);
+              console.log(`Sequência válida encontrada: ${num} (${num.length} dígitos)`);
             }
-            console.log('Estratégia 2 - Sequência de dígitos:', leituraEncontrada);
           }
-        }
 
-        // Estratégia 3: Procurar por dois grupos de números próximos (parte preta e vermelha)
-        if (!leituraEncontrada) {
-          const todosNumeros = text.match(/\d+/g);
-          console.log('Todos os números encontrados:', todosNumeros);
+          // Se encontrou sequências válidas, pegar a MENOR (medidor é menor que código de barras)
+          if (sequenciasValidas.length > 0) {
+            // Ordenar por tamanho (menor primeiro)
+            sequenciasValidas.sort((a, b) => a.length - b.length);
+            const candidato = sequenciasValidas[0];
 
-          if (todosNumeros) {
-            // Filtrar números que podem ser a leitura (1-3 dígitos para parte inteira, 3 dígitos para decimal)
+            console.log(`Candidato escolhido: ${candidato}`);
+
+            // Formatar: se 5-6 dígitos: XX.XXX, se 4: X.XXX
+            if (candidato.length === 6) {
+              leituraEncontrada = `${candidato.substring(0, 3)}.${candidato.substring(3)}`;
+            } else if (candidato.length === 5) {
+              leituraEncontrada = `${candidato.substring(0, 2)}.${candidato.substring(2)}`;
+            } else if (candidato.length === 4) {
+              leituraEncontrada = `${candidato.substring(0, 1)}.${candidato.substring(1)}`;
+            }
+            console.log('Estratégia 1 - Sequência de dígitos (menor válida):', leituraEncontrada);
+          }
+
+          // Estratégia 2: Procurar por dois grupos consecutivos (1-3 dígitos + exatamente 3 dígitos)
+          if (!leituraEncontrada) {
             for (let i = 0; i < todosNumeros.length - 1; i++) {
               const num1 = todosNumeros[i];
               const num2 = todosNumeros[i + 1];
 
-              // Verificar se pode ser a leitura: num1 (1-3 dígitos) + num2 (3 dígitos)
+              // Verificar padrão: num1 (1-3 dígitos) + num2 (exatamente 3 dígitos)
               if (num1.length >= 1 && num1.length <= 3 && num2.length === 3) {
                 leituraEncontrada = `${num1}.${num2}`;
-                console.log('Estratégia 3 - Dois grupos:', leituraEncontrada);
+                console.log('Estratégia 2 - Dois grupos consecutivos:', leituraEncontrada);
                 break;
               }
             }
