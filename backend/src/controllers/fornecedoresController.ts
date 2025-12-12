@@ -16,7 +16,7 @@ export const TIPOS_FORNECEDORES = [
 export const listarFornecedores = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM fornecedores WHERE ativo = true ORDER BY nome'
+      'SELECT * FROM fornecedores WHERE ativo = true ORDER BY tipo, nome'
     );
     res.json(result.rows);
   } catch (error) {

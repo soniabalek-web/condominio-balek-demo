@@ -49,18 +49,16 @@ const Fornecedores = () => {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
 
-  // Função para obter cor do tipo
+  // Função para obter cor do tipo (cores pasteis suaves)
   const getCorTipo = (tipo: string) => {
     const cores: { [key: string]: { bg: string; text: string } } = {
-      'Limpeza': { bg: '#E3F2FD', text: '#1565C0' },
-      'Manutenção': { bg: '#FFF3E0', text: '#E65100' },
-      'Jardinagem': { bg: '#E8F5E9', text: '#2E7D32' },
-      'Segurança': { bg: '#FCE4EC', text: '#C2185B' },
-      'Elétrica': { bg: '#FFF9C4', text: '#F57F17' },
-      'Hidráulica': { bg: '#E1F5FE', text: '#0277BD' },
-      'Pintura': { bg: '#F3E5F5', text: '#7B1FA2' },
-      'Tecnologia': { bg: '#E0F2F1', text: '#00695C' },
-      'Outros': { bg: '#EFEBE9', text: '#4E342E' }
+      'Loja de Material de Construção': { bg: '#FFE0B2', text: '#E65100' },
+      'Loja de Jardinagem': { bg: '#C8E6C9', text: '#2E7D32' },
+      'Loja de Material de Limpeza': { bg: '#B3E5FC', text: '#01579B' },
+      'Escritório': { bg: '#F8BBD0', text: '#880E4F' },
+      'Manutenção em Geral': { bg: '#D1C4E9', text: '#4A148C' },
+      'Supermercados': { bg: '#FFCCBC', text: '#BF360C' },
+      'Outros': { bg: '#E0E0E0', text: '#424242' }
     };
     return cores[tipo] || { bg: '#F5F5F5', text: '#616161' };
   };

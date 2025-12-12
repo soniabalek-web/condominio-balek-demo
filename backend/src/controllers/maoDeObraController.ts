@@ -19,7 +19,7 @@ export const TIPOS_MAO_DE_OBRA = [
 export const listarMaoDeObra = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM mao_de_obra WHERE ativo = true ORDER BY nome'
+      'SELECT * FROM mao_de_obra WHERE ativo = true ORDER BY tipo, nome'
     );
     res.json(result.rows);
   } catch (error) {

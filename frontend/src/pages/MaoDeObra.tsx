@@ -49,19 +49,19 @@ const MaoDeObra = () => {
   const [profissionais, setProfissionais] = useState<MaoDeObra[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
 
-  // Função para obter cor do tipo
+  // Função para obter cor do tipo (cores pasteis suaves)
   const getCorTipo = (tipo: string) => {
     const cores: { [key: string]: { bg: string; text: string } } = {
-      'Eletricista': { bg: '#FFF9C4', text: '#F57F17' },
-      'Encanador': { bg: '#E1F5FE', text: '#0277BD' },
-      'Pedreiro': { bg: '#EFEBE9', text: '#5D4037' },
-      'Pintor': { bg: '#F3E5F5', text: '#7B1FA2' },
-      'Marceneiro': { bg: '#FFF3E0', text: '#E65100' },
-      'Serralheiro': { bg: '#ECEFF1', text: '#455A64' },
-      'Vidraceiro': { bg: '#E0F2F1', text: '#00695C' },
-      'Jardineiro': { bg: '#E8F5E9', text: '#2E7D32' },
-      'Gesseiro': { bg: '#E3F2FD', text: '#1565C0' },
-      'Outros': { bg: '#F5F5F5', text: '#616161' }
+      'Informática': { bg: '#B2DFDB', text: '#004D40' },
+      'Jardinagem': { bg: '#C8E6C9', text: '#2E7D32' },
+      'Construção': { bg: '#FFE0B2', text: '#E65100' },
+      'Pedreiros': { bg: '#D7CCC8', text: '#4E342E' },
+      'Eletricistas': { bg: '#FFF9C4', text: '#F57F17' },
+      'Encanador': { bg: '#B3E5FC', text: '#01579B' },
+      'Pintor': { bg: '#E1BEE7', text: '#6A1B9A' },
+      'Faz Tudo': { bg: '#FFCCBC', text: '#BF360C' },
+      'Manutenção em Geral': { bg: '#D1C4E9', text: '#4A148C' },
+      'Outros': { bg: '#E0E0E0', text: '#424242' }
     };
     return cores[tipo] || { bg: '#F5F5F5', text: '#616161' };
   };
