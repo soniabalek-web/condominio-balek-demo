@@ -29,6 +29,42 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
   const [apartamentoWarning, setApartamentoWarning] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Função para pré-processar a imagem (inverter cores para melhorar OCR de texto branco)
+  const preprocessImage = (imageData: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // Desenhar imagem original
+        ctx.drawImage(img, 0, 0);
+
+        // Obter pixels
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Inverter cores (branco vira preto, preto vira branco)
+        for (let i = 0; i < data.length; i += 4) {
+          data[i] = 255 - data[i];       // R
+          data[i + 1] = 255 - data[i + 1]; // G
+          data[i + 2] = 255 - data[i + 2]; // B
+          // Alpha permanece o mesmo
+        }
+
+        // Aplicar imagem processada
+        ctx.putImageData(imageData, 0, 0);
+
+        // Converter para base64
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = imageData;
+    });
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -50,9 +86,13 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
       setImage(imageData);
 
       try {
-        // Executar OCR
+        // Pré-processar imagem: inverter cores para texto branco ficar preto
+        console.log('Pré-processando imagem (invertendo cores)...');
+        const processedImage = await preprocessImage(imageData);
+
+        // Executar OCR na imagem processada
         const result = await Tesseract.recognize(
-          imageData,
+          processedImage,
           'eng',
           {
             logger: (m) => {
