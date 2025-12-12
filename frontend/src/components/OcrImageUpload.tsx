@@ -191,15 +191,30 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
             }
 
             // Se encontrou candidatos, pegar o que tem padrão mais razoável
-            // Priorizar valores entre 10.000 e 200.000 (faixa típica)
+            // Priorizar valores entre 10.000 e 100.000 (faixa mais típica de residencial)
             if (candidatos.length > 0) {
-              // Ordenar por "razoabilidade": preferir valores entre 10k e 200k
+              // Sistema de score melhorado
               candidatos.sort((a, b) => {
-                const scoreA = (a.valor >= 10000 && a.valor <= 200000) ? 1 : 0;
-                const scoreB = (b.valor >= 10000 && b.valor <= 200000) ? 1 : 0;
+                // Score 3: Faixa ideal 50k-100k (mais comum em residencial)
+                const scoreA3 = (a.valor >= 50000 && a.valor <= 100000) ? 3 : 0;
+                const scoreB3 = (b.valor >= 50000 && b.valor <= 100000) ? 3 : 0;
 
-                if (scoreA !== scoreB) return scoreB - scoreA; // Maior score primeiro
-                return a.posicao - b.posicao; // Desempate: posição mais cedo
+                if (scoreA3 !== scoreB3) return scoreB3 - scoreA3;
+
+                // Score 2: Faixa boa 10k-50k ou 100k-150k
+                const scoreA2 = ((a.valor >= 10000 && a.valor < 50000) || (a.valor > 100000 && a.valor <= 150000)) ? 2 : 0;
+                const scoreB2 = ((b.valor >= 10000 && b.valor < 50000) || (b.valor > 100000 && b.valor <= 150000)) ? 2 : 0;
+
+                if (scoreA2 !== scoreB2) return scoreB2 - scoreA2;
+
+                // Score 1: Faixa aceitável 1k-10k ou 150k-200k
+                const scoreA1 = ((a.valor >= 1000 && a.valor < 10000) || (a.valor > 150000 && a.valor <= 200000)) ? 1 : 0;
+                const scoreB1 = ((b.valor >= 1000 && b.valor < 10000) || (b.valor > 150000 && b.valor <= 200000)) ? 1 : 0;
+
+                if (scoreA1 !== scoreB1) return scoreB1 - scoreA1;
+
+                // Desempate: menor valor (consumos menores são mais comuns)
+                return a.valor - b.valor;
               });
 
               const melhor = candidatos[0];
@@ -208,7 +223,7 @@ const OcrImageUpload = ({ onOcrComplete, apartamento }: OcrImageUploadProps) => 
               const parteDecimal = seqLimpa.substring(seqLimpa.length - 3);
 
               leituraEncontrada = `${parteInteira}.${parteDecimal}`;
-              console.log(`✓ Estratégia 3 - Melhor candidato: ${melhor.seq} (pos ${melhor.posicao}) → ${leituraEncontrada}`);
+              console.log(`✓ Estratégia 3 - Melhor candidato: ${melhor.seq} (valor: ${melhor.valor}, pos ${melhor.posicao}) → ${leituraEncontrada}`);
             }
           }
 
