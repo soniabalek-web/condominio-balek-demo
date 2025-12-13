@@ -63,6 +63,9 @@ export interface BancoTransacao {
   ratear_condominos: boolean;
   data_transacao: string;
   criado_por_nome?: string;
+  comprovante?: string | null;
+  comprovante_nome?: string | null;
+  comprovante_tipo?: string | null;
 }
 
 export interface BancoSaldo {
