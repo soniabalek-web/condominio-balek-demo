@@ -219,6 +219,14 @@ export const createTables = async () => {
       ADD COLUMN IF NOT EXISTS foto_medidor TEXT
     `);
 
+    // Adicionar colunas de comprovante na tabela banco_transacoes se não existirem (migração)
+    await client.query(`
+      ALTER TABLE banco_transacoes
+      ADD COLUMN IF NOT EXISTS comprovante TEXT,
+      ADD COLUMN IF NOT EXISTS comprovante_nome VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS comprovante_tipo VARCHAR(100)
+    `);
+
     // Tabela de configurações do condomínio
     await client.query(`
       CREATE TABLE IF NOT EXISTS configuracoes (

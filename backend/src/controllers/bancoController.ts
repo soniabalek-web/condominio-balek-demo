@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
+import { getNumeroApartamentos } from '../utils/condominio';
 
 // Criar/Atualizar saldo mensal
 export const salvarSaldoMensal = async (req: Request, res: Response) => {
@@ -121,7 +122,7 @@ export const obterSaldoMensal = async (req: Request, res: Response) => {
 export const criarTransacao = async (req: Request, res: Response) => {
   const client = await pool.connect();
   try {
-    const { mes, ano, tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao } = req.body;
+    const { mes, ano, tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao, comprovante, comprovante_nome, comprovante_tipo } = req.body;
     const usuario_id = req.usuario?.id;
 
     if (!mes || !ano || !tipo || !descricao || valor === undefined || !data_transacao) {
@@ -133,15 +134,16 @@ export const criarTransacao = async (req: Request, res: Response) => {
     // Criar a transação bancária
     const transacaoResult = await client.query(
       `INSERT INTO banco_transacoes
-       (mes, ano, tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao, criado_por)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (mes, ano, tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao, criado_por, comprovante, comprovante_nome, comprovante_tipo)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [mes, ano, tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao, usuario_id]
+      [mes, ano, tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao, usuario_id, comprovante || null, comprovante_nome || null, comprovante_tipo || null]
     );
 
     // Se for débito e deve ratear, adicionar automaticamente às despesas do condomínio
     if (tipo === 'debito' && ratear_condominos) {
-      const valorPorApto = valor / 6;
+      const numeroApartamentos = await getNumeroApartamentos();
+      const valorPorApto = valor / numeroApartamentos;
       await client.query(
         `INSERT INTO despesas_condominio (mes, ano, categoria_id, descricao, valor, valor_por_apto)
          VALUES ($1, $2, $3, $4, $5, $6)
@@ -189,7 +191,7 @@ export const atualizarTransacao = async (req: Request, res: Response) => {
   const client = await pool.connect();
   try {
     const { id } = req.params;
-    const { tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao } = req.body;
+    const { tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao, comprovante, comprovante_nome, comprovante_tipo } = req.body;
 
     await client.query('BEGIN');
 
@@ -210,10 +212,15 @@ export const atualizarTransacao = async (req: Request, res: Response) => {
     const result = await client.query(
       `UPDATE banco_transacoes
        SET tipo = $1, categoria_id = $2, descricao = $3, valor = $4,
-           ratear_condominos = $5, data_transacao = $6
-       WHERE id = $7
+           ratear_condominos = $5, data_transacao = $6, comprovante = $7,
+           comprovante_nome = $8, comprovante_tipo = $9
+       WHERE id = $10
        RETURNING *`,
-      [tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao, id]
+      [tipo, categoria_id, descricao, valor, ratear_condominos, data_transacao,
+       comprovante !== undefined ? comprovante : transacaoAntiga.comprovante,
+       comprovante_nome !== undefined ? comprovante_nome : transacaoAntiga.comprovante_nome,
+       comprovante_tipo !== undefined ? comprovante_tipo : transacaoAntiga.comprovante_tipo,
+       id]
     );
 
     // Se a transação antiga tinha ratear=true, deletar a despesa antiga
@@ -227,7 +234,8 @@ export const atualizarTransacao = async (req: Request, res: Response) => {
 
     // Se a nova transação tem ratear=true e é débito, criar/atualizar despesa
     if (tipo === 'debito' && ratear_condominos) {
-      const valorPorApto = valor / 6;
+      const numeroApartamentos = await getNumeroApartamentos();
+      const valorPorApto = valor / numeroApartamentos;
       await client.query(
         `INSERT INTO despesas_condominio (mes, ano, categoria_id, descricao, valor, valor_por_apto)
          VALUES ($1, $2, $3, $4, $5, $6)
@@ -408,7 +416,8 @@ export const mudarMesCobranca = async (req: Request, res: Response) => {
       );
 
       // Criar despesa no novo mês
-      const valorPorApto = transacao.valor / 6;
+      const numeroApartamentos = await getNumeroApartamentos();
+      const valorPorApto = transacao.valor / numeroApartamentos;
       await client.query(
         `INSERT INTO despesas_condominio (mes, ano, categoria_id, descricao, valor, valor_por_apto)
          VALUES ($1, $2, $3, $4, $5, $6)

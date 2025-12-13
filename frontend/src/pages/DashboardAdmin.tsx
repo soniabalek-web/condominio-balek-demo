@@ -72,7 +72,8 @@ import {
   Build,
   Business,
   Savings,
-  AccountBalanceWallet
+  AccountBalanceWallet,
+  AttachFile
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -81,6 +82,8 @@ import StatCard from '../components/StatCard';
 import Fornecedores from './Fornecedores';
 import MaoDeObra from './MaoDeObra';
 import OcrImageUpload from '../components/OcrImageUpload';
+import ComprovanteUpload from '../components/ComprovanteUpload';
+import ComprovanteViewer from '../components/ComprovanteViewer';
 import {
   DespesaCondominio,
   BancoTransacao,
@@ -120,6 +123,12 @@ const DashboardAdmin: React.FC = () => {
   const [dialogNovoApartamento, setDialogNovoApartamento] = useState(false);
   const [dialogExcluirIntervalo, setDialogExcluirIntervalo] = useState(false);
   const [dialogSeguranca, setDialogSeguranca] = useState(false);
+  const [dialogComprovanteViewer, setDialogComprovanteViewer] = useState(false);
+  const [comprovanteAtual, setComprovanteAtual] = useState<{comprovante: string | null, nome: string | null, tipo: string | null}>({
+    comprovante: null,
+    nome: null,
+    tipo: null
+  });
   const [senhaSeguranca, setSenhaSeguranca] = useState('');
   const [acaoSeguranca, setAcaoSeguranca] = useState<'backup' | 'restaurar' | ''>('');
   const [dialogRestaurar, setDialogRestaurar] = useState(false);
@@ -144,7 +153,10 @@ const DashboardAdmin: React.FC = () => {
     descricao: '',
     valor: 0,
     ratear_condominos: false,
-    data_transacao: new Date().toISOString().split('T')[0]
+    data_transacao: new Date().toISOString().split('T')[0],
+    comprovante: null as string | null,
+    comprovante_nome: null as string | null,
+    comprovante_tipo: null as string | null
   });
   const [transacaoEditando, setTransacaoEditando] = useState<any>(null);
   const [despesaEditando, setDespesaEditando] = useState<any>(null);
@@ -483,7 +495,10 @@ const DashboardAdmin: React.FC = () => {
         descricao: '',
         valor: 0,
         ratear_condominos: false,
-        data_transacao: new Date().toISOString().split('T')[0]
+        data_transacao: new Date().toISOString().split('T')[0],
+        comprovante: null,
+        comprovante_nome: null,
+        comprovante_tipo: null
       });
       setTransacaoEditando(null);
       carregarDados();
@@ -499,7 +514,10 @@ const DashboardAdmin: React.FC = () => {
       descricao: transacao.descricao,
       valor: transacao.valor,
       ratear_condominos: transacao.ratear_condominos,
-      data_transacao: new Date(transacao.data_transacao).toISOString().split('T')[0]
+      data_transacao: new Date(transacao.data_transacao).toISOString().split('T')[0],
+      comprovante: transacao.comprovante || null,
+      comprovante_nome: transacao.comprovante_nome || null,
+      comprovante_tipo: transacao.comprovante_tipo || null
     });
     setDialogTransacao(true);
   };
@@ -1460,6 +1478,32 @@ const DashboardAdmin: React.FC = () => {
                               </TableCell>
                               <TableCell align="center">{t.ratear_condominos ? 'Sim' : 'Não'}</TableCell>
                               <TableCell align="center">
+                                {t.comprovante ? (
+                                  <IconButton
+                                    size="small"
+                                    color="success"
+                                    onClick={() => {
+                                      setComprovanteAtual({
+                                        comprovante: t.comprovante,
+                                        nome: t.comprovante_nome,
+                                        tipo: t.comprovante_tipo
+                                      });
+                                      setDialogComprovanteViewer(true);
+                                    }}
+                                    title="Ver Comprovante"
+                                  >
+                                    <AttachFile fontSize="small" />
+                                  </IconButton>
+                                ) : (
+                                  <IconButton
+                                    size="small"
+                                    sx={{ color: '#999' }}
+                                    onClick={() => abrirEdicaoTransacao(t)}
+                                    title="Adicionar Comprovante"
+                                  >
+                                    <AttachFile fontSize="small" />
+                                  </IconButton>
+                                )}
                                 <IconButton
                                   size="small"
                                   color="primary"
@@ -2784,6 +2828,24 @@ const DashboardAdmin: React.FC = () => {
               control={<Switch checked={novaTransacao.ratear_condominos} onChange={(e) => setNovaTransacao({ ...novaTransacao, ratear_condominos: e.target.checked })} />}
               label="Ratear com condôminos"
             />
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Comprovante (opcional)
+              </Typography>
+              <ComprovanteUpload
+                onComprovanteChange={(comprovante, nome, tipo) => {
+                  setNovaTransacao({
+                    ...novaTransacao,
+                    comprovante,
+                    comprovante_nome: nome,
+                    comprovante_tipo: tipo
+                  });
+                }}
+                comprovanteInicial={novaTransacao.comprovante}
+                nomeInicial={novaTransacao.comprovante_nome}
+                tipoInicial={novaTransacao.comprovante_tipo}
+              />
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -3204,6 +3266,15 @@ const DashboardAdmin: React.FC = () => {
           </Typography>
         </Box>
       </Backdrop>
+
+      {/* Modal de Visualização de Comprovante */}
+      <ComprovanteViewer
+        open={dialogComprovanteViewer}
+        onClose={() => setDialogComprovanteViewer(false)}
+        comprovante={comprovanteAtual.comprovante}
+        nomeArquivo={comprovanteAtual.nome}
+        tipoArquivo={comprovanteAtual.tipo}
+      />
     </Box>
   );
 };
